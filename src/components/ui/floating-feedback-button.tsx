@@ -34,7 +34,10 @@ export const FloatingFeedbackButton: React.FC<FloatingFeedbackButtonProps> = ({ 
 
         {/* Close Button (appears on hover) */}
         <Button
-          onClick={handleClose}
+          onClick={(e) => {
+            e.stopPropagation()
+            handleClose()
+          }}
           variant="ghost"
           className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-slate-800 border border-slate-600 text-slate-400 hover:text-white hover:bg-slate-700 opacity-0 group-hover:opacity-100 transition-all duration-200 p-0"
         >
