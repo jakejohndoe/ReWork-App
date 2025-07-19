@@ -19,6 +19,7 @@ import { useTutorial } from "@/components/tutorial/CustomTutorial"
 import TutorialStartButton from "@/components/tutorial/TutorialStartButton"
 import FeedbackCard from "@/components/ui/feedback-card"
 import FloatingFeedbackButton from "@/components/ui/floating-feedback-button"
+import FeedbackModal from "@/components/ui/feedback-modal"
 // ✅ WORKING: Keep the coordinated loading approach that's working
 import { 
   FileText, 
@@ -1074,6 +1075,9 @@ export default function DashboardPage() {
 
       {/* Optional Floating Feedback Button */}
       <FloatingFeedbackButton />
+
+      {/* Feedback Modal */}
+      <FeedbackModal />
 
       {/* Custom CSS for Premium Animations */}
       <style jsx>{`

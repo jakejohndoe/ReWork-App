@@ -69,6 +69,7 @@ model User {
   sessions     Session[]
   resumes      Resume[]
   applications JobApplication[]
+  feedback     Feedback[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -199,6 +200,25 @@ model JobApplication {
   @@map("job_applications")
 }
 
+model Feedback {
+  id        String       @id @default(cuid())
+  userId    String
+  type      FeedbackType
+  message   String       @db.Text
+  email     String?
+  pageUrl   String
+  userAgent String?
+  resolved  Boolean      @default(false)
+  
+  // Relations
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  
+  @@map("feedback")
+}
+
 // Enums
 enum Plan {
   FREE
@@ -212,4 +232,10 @@ enum ApplicationStatus {
   INTERVIEW
   REJECTED
   OFFER
+}
+
+enum FeedbackType {
+  BUG_REPORT
+  FEATURE_REQUEST
+  GENERAL_FEEDBACK
 }

@@ -4,15 +4,14 @@ import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MessageSquare, ExternalLink, Lightbulb, Bug, Heart } from "lucide-react"
+import { useFeedback } from "@/contexts/feedback-context"
 
 interface FeedbackCardProps {
   className?: string
 }
 
 export const FeedbackCard: React.FC<FeedbackCardProps> = ({ className = "" }) => {
-  const handleFeedbackClick = () => {
-    window.open('https://reworksolutions.canny.io/', '_blank', 'noopener,noreferrer')
-  }
+  const { openModal } = useFeedback()
 
   return (
     <Card className={`glass-card border-white/10 hover:border-cyan-400/30 transition-all duration-300 hover:scale-[1.02] ${className}`}>
@@ -50,17 +49,22 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({ className = "" }) =>
         </div>
         
         <Button 
-          onClick={handleFeedbackClick}
+          onClick={openModal}
           className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/25"
         >
           <MessageSquare className="w-4 h-4 mr-2" />
           Give Feedback
-          <ExternalLink className="w-3 h-3 ml-2 opacity-70" />
         </Button>
         
-        <p className="text-xs text-slate-500 text-center">
-          Opens Canny feedback board in new tab
-        </p>
+        <div className="text-center">
+          <button
+            onClick={() => window.open('https://reworksolutions.canny.io/', '_blank', 'noopener,noreferrer')}
+            className="text-xs text-slate-500 hover:text-cyan-400 transition-colors inline-flex items-center gap-1"
+          >
+            <span>View Feature Roadmap</span>
+            <ExternalLink className="w-3 h-3" />
+          </button>
+        </div>
       </CardContent>
     </Card>
   )
