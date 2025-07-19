@@ -17,6 +17,8 @@ import { SettingsModal } from "@/components/settings-modal"
 import ResumeLoader from "@/components/resume-loader"
 import { useTutorial } from "@/components/tutorial/CustomTutorial"
 import TutorialStartButton from "@/components/tutorial/TutorialStartButton"
+import FeedbackCard from "@/components/ui/feedback-card"
+import FloatingFeedbackButton from "@/components/ui/floating-feedback-button"
 // ✅ WORKING: Keep the coordinated loading approach that's working
 import { 
   FileText, 
@@ -37,7 +39,8 @@ import {
   CheckCircle,
   Grid3x3,
   List,
-  Star
+  Star,
+  MessageSquare
 } from "lucide-react"
 import { Logo, BetaBadge } from "@/components/ui/logo"
 
@@ -346,6 +349,14 @@ export default function DashboardPage() {
                 >
                   <Settings className="w-4 h-4 mr-2" />
                   Settings
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 backdrop-blur-sm"
+                  onClick={() => window.open('https://reworksolutions.canny.io/', '_blank', 'noopener,noreferrer')}
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Feedback
                 </Button>
                 <Button 
                   onClick={() => signOut()} 
@@ -852,6 +863,9 @@ export default function DashboardPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Feedback Card */}
+              <FeedbackCard />
             </div>
           </div>
 
@@ -1057,6 +1071,9 @@ export default function DashboardPage() {
           </Dialog>
         </main>
       </div>
+
+      {/* Optional Floating Feedback Button */}
+      <FloatingFeedbackButton />
 
       {/* Custom CSS for Premium Animations */}
       <style jsx>{`
