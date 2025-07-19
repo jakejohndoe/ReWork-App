@@ -177,11 +177,20 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const currentPageType = getCurrentPageType(pathname)
       const currentTutorialStep = tutorialSteps[currentStep]
       
+      console.log('Tutorial Debug:', {
+        currentPageType,
+        currentStep,
+        currentTutorialStep: currentTutorialStep?.id,
+        tutorialActive,
+        pathname
+      })
+      
       // Auto-advance tutorial based on page navigation
       if (currentPageType && currentTutorialStep && currentPageType !== currentTutorialStep.page) {
         // User navigated to a different page, find the appropriate step
         const nextStepIndex = tutorialSteps.findIndex(step => step.page === currentPageType)
         if (nextStepIndex !== -1 && nextStepIndex > currentStep) {
+          console.log('Auto-advancing tutorial to step:', nextStepIndex)
           // Advance to the step for this page
           setCurrentStep(nextStepIndex)
           localStorage.setItem(`tutorial_step_${session.user.email}`, nextStepIndex.toString())
@@ -195,15 +204,18 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         )
         
         if (stepForThisPage) {
+          console.log('Showing tutorial step:', stepForThisPage.id)
           setTimeout(() => {
             setRun(true)
             setIsVisible(true)
           }, 800) // Delay to ensure page has loaded
         } else {
+          console.log('No tutorial step for this page, hiding tutorial')
           setIsVisible(false)
           setRun(false)
         }
       } else {
+        console.log('Unknown page type, hiding tutorial')
         setIsVisible(false)
         setRun(false)
       }
@@ -370,59 +382,111 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
 }) => {
   const [targetElement, setTargetElement] = useState<HTMLElement | null>(null)
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 })
+  const [elementFound, setElementFound] = useState(false)
 
+  // Add escape key handler
   useEffect(() => {
-    const element = document.querySelector(step.target) as HTMLElement
-    if (element) {
-      setTargetElement(element)
-      element.style.position = 'relative'
-      element.style.zIndex = '10001'
-      element.style.boxShadow = '0 0 0 4px rgba(139, 92, 246, 0.5), 0 0 0 9999px rgba(0, 0, 0, 0.7)'
-      element.style.borderRadius = '8px'
-
-      // Calculate tooltip position
-      const rect = element.getBoundingClientRect()
-      const tooltipWidth = 380
-      const tooltipHeight = 200
-
-      let top = rect.bottom + 10
-      let left = rect.left + (rect.width / 2) - (tooltipWidth / 2)
-
-      // Adjust for screen boundaries
-      if (left < 10) left = 10
-      if (left + tooltipWidth > window.innerWidth - 10) left = window.innerWidth - tooltipWidth - 10
-      if (top + tooltipHeight > window.innerHeight - 10) top = rect.top - tooltipHeight - 10
-
-      // For center placement
-      if (step.placement === 'center') {
-        top = (window.innerHeight / 2) - (tooltipHeight / 2)
-        left = (window.innerWidth / 2) - (tooltipWidth / 2)
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onSkip()
       }
-
-      setTooltipPosition({ top, left })
     }
 
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onSkip])
+
+  // Auto-skip if element not found after 5 seconds
+  useEffect(() => {
+    if (!elementFound) {
+      const autoSkipTimer = setTimeout(() => {
+        console.warn(`Tutorial auto-skipping step ${currentStep} - element not found after 5 seconds`)
+        onNext()
+      }, 5000)
+
+      return () => clearTimeout(autoSkipTimer)
+    }
+  }, [elementFound, currentStep, onNext])
+
+  useEffect(() => {
+    // Reset element found flag when step changes
+    setElementFound(false)
+    
+    // Wait a bit for the page to render before trying to find the element
+    const findElement = () => {
+      const element = document.querySelector(step.target) as HTMLElement
+      if (element) {
+        setTargetElement(element)
+        setElementFound(true)
+        element.style.position = 'relative'
+        element.style.zIndex = '10001'
+        element.style.boxShadow = '0 0 0 4px rgba(139, 92, 246, 0.5)'
+        element.style.borderRadius = '8px'
+        element.style.pointerEvents = 'auto'
+
+        // Calculate tooltip position
+        const rect = element.getBoundingClientRect()
+        const tooltipWidth = 380
+        const tooltipHeight = 200
+
+        let top = rect.bottom + 10
+        let left = rect.left + (rect.width / 2) - (tooltipWidth / 2)
+
+        // Adjust for screen boundaries
+        if (left < 10) left = 10
+        if (left + tooltipWidth > window.innerWidth - 10) left = window.innerWidth - tooltipWidth - 10
+        if (top + tooltipHeight > window.innerHeight - 10) top = rect.top - tooltipHeight - 10
+
+        // For center placement
+        if (step.placement === 'center') {
+          top = (window.innerHeight / 2) - (tooltipHeight / 2)
+          left = (window.innerWidth / 2) - (tooltipWidth / 2)
+        }
+
+        setTooltipPosition({ top, left })
+      } else {
+        // Element not found, center the tooltip as fallback
+        console.warn(`Tutorial target element "${step.target}" not found`)
+        setElementFound(false)
+        setTooltipPosition({ 
+          top: (window.innerHeight / 2) - 100, 
+          left: (window.innerWidth / 2) - 190 
+        })
+      }
+    }
+
+    // Try immediately and with a small delay
+    findElement()
+    const timeoutId = setTimeout(findElement, 500)
+
     return () => {
+      clearTimeout(timeoutId)
+      const element = document.querySelector(step.target) as HTMLElement
       if (element) {
         element.style.position = ''
         element.style.zIndex = ''
         element.style.boxShadow = ''
         element.style.borderRadius = ''
+        element.style.pointerEvents = ''
       }
     }
   }, [step])
 
   return (
     <>
-      {/* Dark overlay */}
-      <div className="fixed inset-0 bg-black/70 z-10000" />
+      {/* Dark overlay - allows clicks through except on tooltip */}
+      <div 
+        className="fixed inset-0 bg-black/70 z-10000" 
+        style={{ pointerEvents: 'none' }}
+      />
       
       {/* Tutorial tooltip */}
       <Card 
         className="fixed z-10002 w-96 bg-slate-900/95 backdrop-blur-xl border border-purple-500/30 shadow-2xl"
         style={{ 
           top: tooltipPosition.top, 
-          left: tooltipPosition.left 
+          left: tooltipPosition.left,
+          pointerEvents: 'auto'
         }}
       >
         <CardContent className="p-6">
@@ -456,6 +520,15 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
                 <SkipForward className="w-4 h-4 mr-1" />
                 Skip Tour
               </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onSkip}
+                className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+              >
+                <X className="w-4 h-4 mr-1" />
+                Force Exit
+              </Button>
             </div>
             
             <div className="flex gap-2">
@@ -474,6 +547,10 @@ const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
+          </div>
+          
+          <div className="mt-4 text-xs text-slate-400 text-center">
+            Press <kbd className="px-1 py-0.5 bg-slate-700 rounded text-xs">Esc</kbd> to exit tutorial anytime
           </div>
         </CardContent>
       </Card>
