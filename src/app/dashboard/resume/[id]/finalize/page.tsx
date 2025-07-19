@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator'
 // ✅ ADDED: Import the minimum loading hook
 import { useFinalizeLoading } from '@/hooks/useMinimumLoading'
 import ResumeLoader from '@/components/resume-loader'
+import { useTutorial } from '@/components/tutorial/CustomTutorial'
 import { ArrowLeft, CheckCircle, Download, Sparkles, ArrowRight, Crown, Palette, FileText, PartyPopper, Zap } from 'lucide-react'
 import { Logo, BetaBadge } from '@/components/ui/logo'
 import { toast } from 'sonner'

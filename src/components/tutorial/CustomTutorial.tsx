@@ -27,6 +27,9 @@ interface TutorialContextType {
   nextStep: () => void
   prevStep: () => void
   isVisible: boolean
+  tutorialActive: boolean
+  setTutorialActive: (active: boolean) => void
+  advanceToStep: (stepIndex: number) => void
 }
 
 const TutorialContext = createContext<TutorialContextType | undefined>(undefined)
@@ -64,7 +67,7 @@ const tutorialSteps: TutorialStep[] = [
     title: 'Auto-Fill Your Information ✨',
     content: 'Click "Auto-fill from PDF" to quickly populate all sections with your existing resume data. Then review and complete each section - contact info, summary, work experience, education, and skills.',
     placement: 'bottom',
-    page: '/dashboard/resume/[id]',
+    page: 'edit',
     showProgress: true
   },
   {
@@ -73,7 +76,7 @@ const tutorialSteps: TutorialStep[] = [
     title: 'Add Job Details 🎯',
     content: 'Once you\'ve filled out your resume information, click here to continue to the job description page.',
     placement: 'top',
-    page: '/dashboard/resume/[id]',
+    page: 'edit',
     showProgress: true
   },
   {
@@ -82,7 +85,7 @@ const tutorialSteps: TutorialStep[] = [
     title: 'Enter Job Details 💼',
     content: 'Fill in all the job details you can find from the job posting: job title, company name, location, full job description, requirements, and benefits.',
     placement: 'right',
-    page: '/dashboard/resume/[id]/job-description',
+    page: 'job-description',
     showProgress: true
   },
   {
@@ -91,7 +94,7 @@ const tutorialSteps: TutorialStep[] = [
     title: 'Start AI Analysis 🤖',
     content: 'This is where the magic happens! Click here to start the AI analysis. Note: This process may take 60-90 seconds as our AI optimizes your resume for this specific job.',
     placement: 'top',
-    page: '/dashboard/resume/[id]/job-description',
+    page: 'job-description',
     showProgress: true
   },
   {
@@ -100,7 +103,7 @@ const tutorialSteps: TutorialStep[] = [
     title: 'Review AI Suggestions 🔄',
     content: 'Here you can swap individual sections with AI suggestions, apply all optimizations at once, reset changes if needed, and watch your compatibility score improve!',
     placement: 'left',
-    page: '/dashboard/resume/[id]/analysis',
+    page: 'analysis',
     showProgress: true
   },
   {
@@ -109,7 +112,7 @@ const tutorialSteps: TutorialStep[] = [
     title: 'Finalize Your Resume 🎨',
     content: 'Almost done! Here you can choose from different templates, customize colors to match your style, preview your optimized resume, and download when you\'re ready! Congratulations! You\'ve created your first AI-optimized resume! 🎉',
     placement: 'center',
-    page: '/dashboard/resume/[id]/finalize',
+    page: 'finalize',
     showProgress: true
   }
 ]
@@ -121,72 +124,200 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [currentStep, setCurrentStep] = useState(0)
   const [resumeUploaded, setResumeUploaded] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
+  const [tutorialActive, setTutorialActive] = useState(false)
 
-  // Check if user should see tutorial
+  // Helper function to determine current page type
+  const getCurrentPageType = (path: string) => {
+    if (path === '/dashboard') return '/dashboard'
+    if (path?.includes('/dashboard/resume/') && path?.match(/\/dashboard\/resume\/[^\/]+$/)) return 'edit'
+    if (path?.includes('/job-description')) return 'job-description'
+    if (path?.includes('/analysis')) return 'analysis'
+    if (path?.includes('/finalize')) return 'finalize'
+    return null
+  }
+
+  // Load tutorial state from localStorage
   useEffect(() => {
     if (session?.user?.email) {
       const tutorialCompleted = localStorage.getItem(`tutorial_completed_${session.user.email}`)
+      const activeTutorialStep = localStorage.getItem(`tutorial_step_${session.user.email}`)
+      const tutorialInProgress = localStorage.getItem(`tutorial_active_${session.user.email}`)
+      
+      if (!tutorialCompleted && tutorialInProgress === 'true') {
+        setTutorialActive(true)
+        if (activeTutorialStep) {
+          setCurrentStep(parseInt(activeTutorialStep))
+        }
+      }
+    }
+  }, [session])
+
+  // Auto-start tutorial for new users on dashboard
+  useEffect(() => {
+    if (session?.user?.email && pathname === '/dashboard') {
+      const tutorialCompleted = localStorage.getItem(`tutorial_completed_${session.user.email}`)
       const hasSeenTutorial = localStorage.getItem(`tutorial_seen_${session.user.email}`)
       
-      if (!tutorialCompleted && !hasSeenTutorial && pathname === '/dashboard') {
+      if (!tutorialCompleted && !hasSeenTutorial) {
         localStorage.setItem(`tutorial_seen_${session.user.email}`, 'true')
         setTimeout(() => {
+          setTutorialActive(true)
           setRun(true)
           setIsVisible(true)
+          localStorage.setItem(`tutorial_active_${session.user.email}`, 'true')
+          localStorage.setItem(`tutorial_step_${session.user.email}`, '0')
         }, 1500)
       }
     }
   }, [session, pathname])
 
-  // Handle resume upload to continue tutorial
+  // Handle cross-page tutorial continuation and auto-advancement
   useEffect(() => {
-    if (resumeUploaded && pathname?.includes('/edit') && currentStep === 1) {
-      setTimeout(() => {
-        setRun(true)
-        setIsVisible(true)
-        setCurrentStep(2)
-      }, 500)
+    if (tutorialActive && session?.user?.email) {
+      const currentPageType = getCurrentPageType(pathname)
+      const currentTutorialStep = tutorialSteps[currentStep]
+      
+      // Auto-advance tutorial based on page navigation
+      if (currentPageType && currentTutorialStep && currentPageType !== currentTutorialStep.page) {
+        // User navigated to a different page, find the appropriate step
+        const nextStepIndex = tutorialSteps.findIndex(step => step.page === currentPageType)
+        if (nextStepIndex !== -1 && nextStepIndex > currentStep) {
+          // Advance to the step for this page
+          setCurrentStep(nextStepIndex)
+          localStorage.setItem(`tutorial_step_${session.user.email}`, nextStepIndex.toString())
+        }
+      }
+      
+      // Check if we should show tutorial on this page
+      if (currentPageType) {
+        const stepForThisPage = tutorialSteps.find((step, index) => 
+          step.page === currentPageType && index >= currentStep
+        )
+        
+        if (stepForThisPage) {
+          setTimeout(() => {
+            setRun(true)
+            setIsVisible(true)
+          }, 800) // Delay to ensure page has loaded
+        } else {
+          setIsVisible(false)
+          setRun(false)
+        }
+      } else {
+        setIsVisible(false)
+        setRun(false)
+      }
     }
-  }, [pathname, resumeUploaded, currentStep])
+  }, [pathname, currentStep, tutorialActive, session])
+
+  // Handle resume upload to advance tutorial
+  useEffect(() => {
+    if (resumeUploaded && tutorialActive && currentStep === 1) {
+      // User uploaded resume, advance to edit page steps
+      setTimeout(() => {
+        setCurrentStep(2)
+        if (session?.user?.email) {
+          localStorage.setItem(`tutorial_step_${session.user.email}`, '2')
+        }
+      }, 1000)
+    }
+  }, [resumeUploaded, tutorialActive, currentStep, session])
 
   const currentTutorialStep = tutorialSteps[currentStep]
-  const isCurrentPage = currentTutorialStep && (
-    currentTutorialStep.page === pathname || 
-    (currentTutorialStep.page.includes('[id]') && pathname?.includes('/dashboard/resume/'))
-  )
+  const currentPageType = getCurrentPageType(pathname)
+  const isCurrentPage = currentTutorialStep && currentPageType === currentTutorialStep.page
 
   const startTutorial = useCallback(() => {
+    setTutorialActive(true)
     setRun(true)
     setIsVisible(true)
     setCurrentStep(0)
-  }, [])
+    if (session?.user?.email) {
+      localStorage.setItem(`tutorial_active_${session.user.email}`, 'true')
+      localStorage.setItem(`tutorial_step_${session.user.email}`, '0')
+    }
+  }, [session])
 
   const skipTutorial = useCallback(() => {
+    setTutorialActive(false)
     setRun(false)
     setIsVisible(false)
     if (session?.user?.email) {
       localStorage.setItem(`tutorial_completed_${session.user.email}`, 'true')
+      localStorage.removeItem(`tutorial_active_${session.user.email}`)
+      localStorage.removeItem(`tutorial_step_${session.user.email}`)
     }
   }, [session])
 
   const nextStep = useCallback(() => {
     if (currentStep < tutorialSteps.length - 1) {
-      setCurrentStep(currentStep + 1)
-      // Pause if we need to navigate to a different page
-      if (tutorialSteps[currentStep + 1]?.page !== pathname) {
+      const newStep = currentStep + 1
+      setCurrentStep(newStep)
+      
+      if (session?.user?.email) {
+        localStorage.setItem(`tutorial_step_${session.user.email}`, newStep.toString())
+      }
+      
+      // Check if next step is on a different page
+      const nextStepPage = tutorialSteps[newStep]?.page
+      const currentPageType = getCurrentPageType(pathname)
+      
+      if (nextStepPage !== currentPageType) {
+        // Hide tutorial until user navigates to the correct page
         setRun(false)
         setIsVisible(false)
+        
+        // Show a brief hint about continuing the tutorial
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.setItem('tutorial_hint', `Tutorial will continue on the next page!`)
+          setTimeout(() => localStorage.removeItem('tutorial_hint'), 5000)
+        }
       }
     } else {
       skipTutorial()
     }
-  }, [currentStep, pathname, skipTutorial])
+  }, [currentStep, pathname, session, skipTutorial])
 
   const prevStep = useCallback(() => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
+      const newStep = currentStep - 1
+      setCurrentStep(newStep)
+      
+      if (session?.user?.email) {
+        localStorage.setItem(`tutorial_step_${session.user.email}`, newStep.toString())
+      }
+      
+      // Check if previous step is on a different page
+      const prevStepPage = tutorialSteps[newStep]?.page
+      const currentPageType = getCurrentPageType(pathname)
+      
+      if (prevStepPage !== currentPageType) {
+        setRun(false)
+        setIsVisible(false)
+      }
     }
-  }, [currentStep])
+  }, [currentStep, pathname, session])
+
+  const advanceToStep = useCallback((stepIndex: number) => {
+    if (stepIndex >= 0 && stepIndex < tutorialSteps.length && tutorialActive) {
+      setCurrentStep(stepIndex)
+      
+      if (session?.user?.email) {
+        localStorage.setItem(`tutorial_step_${session.user.email}`, stepIndex.toString())
+      }
+      
+      // Check if we should show tutorial on current page
+      const currentPageType = getCurrentPageType(pathname)
+      const stepPage = tutorialSteps[stepIndex]?.page
+      
+      if (stepPage === currentPageType) {
+        setTimeout(() => {
+          setRun(true)
+          setIsVisible(true)
+        }, 500)
+      }
+    }
+  }, [tutorialActive, session, pathname])
 
   return (
     <TutorialContext.Provider value={{
@@ -198,12 +329,15 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       skipTutorial,
       nextStep,
       prevStep,
-      isVisible
+      isVisible,
+      tutorialActive,
+      setTutorialActive,
+      advanceToStep
     }}>
       {children}
       
       {/* Custom Tutorial Overlay */}
-      {run && isVisible && isCurrentPage && currentTutorialStep && (
+      {run && isVisible && isCurrentPage && currentTutorialStep && tutorialActive && (
         <TutorialOverlay
           step={currentTutorialStep}
           currentStep={currentStep}

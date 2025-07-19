@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import ResumeLoader from '@/components/resume-loader'
+import { useTutorial } from "@/components/tutorial/CustomTutorial"
 import { 
   ArrowLeft, 
   ArrowRight,

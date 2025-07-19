@@ -23,6 +23,7 @@ import { ContactInfo, StructuredResumeData, WorkExperience, SkillsStructure, Edu
 // ✅ ADDED: Import the minimum loading hook
 import { useResumeLoading } from '@/hooks/useMinimumLoading'
 import ResumeLoader from '@/components/resume-loader'
+import { useTutorial } from '@/components/tutorial/CustomTutorial'
 import { 
   ArrowLeft, 
   Save, 
@@ -183,6 +184,7 @@ export default function ResumeEditorPage() {
   const params = useParams()
   const router = useRouter()
   const resumeId = params.id as string
+  const { tutorialActive } = useTutorial()
 
   // ✅ ADDED: Minimum loading hook for 3.5 seconds
   const { shouldShowContent } = useResumeLoading()

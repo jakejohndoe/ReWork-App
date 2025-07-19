@@ -14,6 +14,7 @@ import Link from "next/link"
 // ✅ ADDED: Import the minimum loading hook
 import { useJobDescriptionLoading } from "@/hooks/useMinimumLoading"
 import ResumeLoader from '@/components/resume-loader'
+import { useTutorial } from "@/components/tutorial/CustomTutorial"
 import { 
   ArrowLeft, 
   ArrowRight,
