@@ -94,6 +94,19 @@ function SimpleResumePreview({ resumeData, className = "" }: { resumeData: any, 
   const name = extractName(resumeData?.contactInfo || resumeData?.contact)
   const contact = getContactDetails(resumeData?.contactInfo || resumeData?.contact)
 
+  // Check if we have any actual resume data
+  const hasResumeData = !!(
+    (resumeData?.contactInfo && typeof resumeData.contactInfo === 'object' && (resumeData.contactInfo as ContactInfo).email) ||
+    resumeData?.summary ||
+    resumeData?.structuredSummary ||
+    resumeData?.experience ||
+    (resumeData?.workExperience && resumeData.workExperience.length > 0) ||
+    resumeData?.education ||
+    (resumeData?.structuredEducation && resumeData.structuredEducation.length > 0) ||
+    resumeData?.skills ||
+    resumeData?.structuredSkills
+  )
+
   return (
     <Card className={`glass-card border-white/10 hover:scale-[1.02] transition-all duration-300 ${className}`}>
       <CardHeader>
@@ -109,10 +122,23 @@ function SimpleResumePreview({ resumeData, className = "" }: { resumeData: any, 
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="w-full max-w-sm bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden relative transition-all duration-300 transform-gpu hover:shadow-2xl hover:scale-[1.02] mx-auto group">
-          {/* Resume Header */}
-          <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 text-white">
-            <h1 className="text-lg font-bold mb-1">{name}</h1>
+        {!hasResumeData ? (
+          // Empty state
+          <div className="w-full max-w-sm bg-gradient-to-br from-slate-900/50 to-purple-900/30 rounded-lg border border-purple-500/20 p-8 mx-auto text-center">
+            <Sparkles className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+            <h3 className="text-white font-semibold mb-2">No Resume Data Yet</h3>
+            <p className="text-slate-400 text-sm mb-4">
+              Click "Auto-fill from PDF" to populate your resume with data from your uploaded file
+            </p>
+            <div className="text-xs text-slate-500">
+              The preview will update automatically as you add information
+            </div>
+          </div>
+        ) : (
+          <div className="w-full max-w-sm bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden relative transition-all duration-300 transform-gpu hover:shadow-2xl hover:scale-[1.02] mx-auto group">
+            {/* Resume Header */}
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 text-white">
+              <h1 className="text-lg font-bold mb-1">{name || 'Your Name'}</h1>
             <div className="space-y-1 text-xs opacity-90">
               {contact.email && <div>{contact.email}</div>}
               {contact.phone && <div>{contact.phone}</div>}
@@ -138,52 +164,74 @@ function SimpleResumePreview({ resumeData, className = "" }: { resumeData: any, 
             )}
 
             {/* Work Experience */}
-            {(resumeData?.experience || resumeData?.workExperience) && (
+            {((resumeData?.experience && resumeData.experience.length > 0) ||
+              (resumeData?.workExperience && resumeData.workExperience.length > 0)) && (
               <div>
                 <h2 className="font-semibold text-slate-800 uppercase tracking-wide text-xs border-b border-slate-200 pb-1 mb-2">
                   Experience
                 </h2>
                 <div className="space-y-2">
-                  {resumeData?.workExperience ? (
-                    <div>
-                      <div className="font-medium text-slate-900 text-xs">
-                        {resumeData.workExperience[0]?.jobTitle}
+                  {resumeData?.workExperience && resumeData.workExperience.length > 0 ? (
+                    // Show up to 2 work experiences in preview
+                    resumeData.workExperience.slice(0, 2).map((job: any, index: number) => (
+                      <div key={index}>
+                        {job.jobTitle && (
+                          <div className="font-medium text-slate-900 text-xs">
+                            {job.jobTitle}
+                          </div>
+                        )}
+                        {(job.company || job.startDate || job.endDate) && (
+                          <div className="text-slate-600 text-xs mb-1">
+                            {[job.company, job.startDate && job.endDate ? `${job.startDate} - ${job.endDate}` : job.startDate || job.endDate]
+                              .filter(Boolean)
+                              .join(' • ')}
+                          </div>
+                        )}
+                        {job.responsibilities && (
+                          <p className="text-slate-700 text-xs leading-relaxed">
+                            {truncateText(job.responsibilities, 80)}
+                          </p>
+                        )}
                       </div>
-                      <div className="text-slate-600 text-xs mb-1">
-                        {resumeData.workExperience[0]?.company} • {resumeData.workExperience[0]?.startDate} - {resumeData.workExperience[0]?.endDate}
-                      </div>
-                      <p className="text-slate-700 text-xs leading-relaxed">
-                        {truncateText(resumeData.workExperience[0]?.responsibilities, 80)}
-                      </p>
-                    </div>
-                  ) : (
+                    ))
+                  ) : resumeData?.experience ? (
                     <div className="text-slate-700 text-xs leading-relaxed">
                       {truncateText(resumeData.experience, 100)}
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
             )}
 
             {/* Education */}
-            {(resumeData?.education || resumeData?.structuredEducation) && (
+            {((resumeData?.education && resumeData.education.length > 0) ||
+              (resumeData?.structuredEducation && resumeData.structuredEducation.length > 0)) && (
               <div>
                 <h2 className="font-semibold text-slate-800 uppercase tracking-wide text-xs border-b border-slate-200 pb-1 mb-2">
                   Education
                 </h2>
-                <div className="text-slate-700 text-xs">
-                  {resumeData?.structuredEducation ? (
-                    <div>
-                      <div className="font-medium text-slate-900">
-                        {resumeData.structuredEducation[0]?.degree}
+                <div className="text-slate-700 text-xs space-y-1">
+                  {resumeData?.structuredEducation && resumeData.structuredEducation.length > 0 ? (
+                    // Show up to 2 education entries in preview
+                    resumeData.structuredEducation.slice(0, 2).map((edu: any, index: number) => (
+                      <div key={index}>
+                        {edu.degree && (
+                          <div className="font-medium text-slate-900">
+                            {edu.degree} {edu.fieldOfStudy ? `in ${edu.fieldOfStudy}` : ''}
+                          </div>
+                        )}
+                        {(edu.institution || edu.graduationYear) && (
+                          <div className="text-slate-600">
+                            {[edu.institution, edu.graduationYear]
+                              .filter(Boolean)
+                              .join(' • ')}
+                          </div>
+                        )}
                       </div>
-                      <div className="text-slate-600">
-                        {resumeData.structuredEducation[0]?.institution} • {resumeData.structuredEducation[0]?.graduationYear}
-                      </div>
-                    </div>
-                  ) : (
+                    ))
+                  ) : resumeData?.education ? (
                     truncateText(resumeData.education, 60)
-                  )}
+                  ) : null}
                 </div>
               </div>
             )}
@@ -204,16 +252,17 @@ function SimpleResumePreview({ resumeData, className = "" }: { resumeData: any, 
             )}
           </div>
 
-          {/* Premium glow effect on hover */}
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg"></div>
+            {/* Premium glow effect on hover */}
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg"></div>
 
-          {/* Professional template indicator */}
-          <div className="absolute top-2 right-2">
-            <div className="bg-slate-900 text-white text-xs px-2 py-1 rounded-full font-medium">
-              Professional
+            {/* Professional template indicator - fixed positioning */}
+            <div className="absolute top-2 right-2 z-10">
+              <div className="bg-slate-900/90 backdrop-blur text-white text-xs px-2 py-1 rounded-full font-medium shadow-sm">
+                Professional
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   )
@@ -266,7 +315,7 @@ export default function ResumeEditorPage() {
   const { shouldShowContent } = useResumeLoading()
 
   const [resume, setResume] = useState<ResumeData | null>(null)
-  // ✅ REMOVED: All competing loading state logic
+  const [isDataLoading, setDataLoading] = useState(true)
   const [isSaving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState("edit")
   const [hasChanges, setHasChanges] = useState(false)
@@ -619,10 +668,11 @@ export default function ResumeEditorPage() {
 
   // ✅ FIXED: Simple fetch without competing loading logic
   const fetchResume = async () => {
+    setDataLoading(true)
     try {
       const response = await fetch(`/api/resumes/${resumeId}`)
       const data = await response.json()
-      
+
       if (!response.ok) {
         throw new Error('Resume not found')
       }
@@ -727,6 +777,8 @@ export default function ResumeEditorPage() {
     } catch (error) {
       console.error('Error fetching resume:', error)
       router.push('/dashboard')
+    } finally {
+      setDataLoading(false)
     }
   }
 
@@ -867,12 +919,12 @@ export default function ResumeEditorPage() {
     return null
   }
 
-  // ✅ ADDED: Early return for loading state - let loading.tsx show the beautiful animation
-  if (!shouldShowContent) {
+  // Show loading state during minimum time OR while data is loading
+  if (!shouldShowContent || isDataLoading) {
     return <ResumeLoader title="Loading your resume" subtitle="Preparing the editor..." />
   }
 
-  // ✅ FIXED: Only show error after loading screen is done
+  // Only show error after both loading states are complete
   if (!resume) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
@@ -895,11 +947,6 @@ export default function ResumeEditorPage() {
         </div>
       </div>
     )
-  }
-
-  // Show loading state while data is being fetched or during minimum loading time
-  if (!shouldShowContent || !resume) {
-    return <ResumeLoader />
   }
 
   return (

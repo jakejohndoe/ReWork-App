@@ -87,10 +87,13 @@ export default function ResumeUploader({
             )
           )
 
-          // Show success message
-          toast.success(`Resume "${uploadingFile.file.name}" uploaded successfully!`)
+          // Show success message and redirect smoothly
+          toast.success('Resume uploaded successfully!', {
+            description: 'Taking you to the editor...',
+            duration: 2000
+          })
 
-          // Redirect to the resume page or dashboard after a short delay
+          // Redirect quickly to avoid jarring transition
           setTimeout(() => {
             if (data.resume?.id) {
               // If we have a resume ID, go to that resume's page
@@ -99,7 +102,7 @@ export default function ResumeUploader({
               // Otherwise go to dashboard
               router.push('/dashboard')
             }
-          }, 1500)
+          }, 500) // Faster redirect for smoother UX
 
         } else {
           // Handle error response

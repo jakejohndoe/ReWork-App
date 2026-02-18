@@ -215,6 +215,11 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsVisible(true)
     setCurrentStep(0)
     if (session?.user?.email) {
+      // Clear dismiss/complete flags when manually starting tutorial
+      localStorage.removeItem(`tutorial_completed_${session.user.email}`)
+      localStorage.removeItem(`tutorial_dismissed_${session.user.email}`)
+      localStorage.removeItem(`tutorial_seen_${session.user.email}`)
+      // Set active flags
       localStorage.setItem(`tutorial_active_${session.user.email}`, 'true')
       localStorage.setItem(`tutorial_step_${session.user.email}`, '0')
     }
@@ -226,6 +231,7 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsVisible(false)
     if (session?.user?.email) {
       localStorage.setItem(`tutorial_completed_${session.user.email}`, 'true')
+      localStorage.setItem(`tutorial_dismissed_${session.user.email}`, 'true')
       localStorage.removeItem(`tutorial_active_${session.user.email}`)
       localStorage.removeItem(`tutorial_step_${session.user.email}`)
     }

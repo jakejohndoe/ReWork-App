@@ -31,11 +31,16 @@
 - Storage switched from AWS S3 to Supabase Storage ✅
 - Upload UX fixed (removed fake progress bar) ✅
 - AI prompt rewritten (484 lines → 82 lines, analysis → generation) ✅
-- Auto-fill from PDF fixed ✅
+- Auto-fill from PDF with accurate AI parsing (no placeholders) ✅
+- Null byte sanitization for PostgreSQL compatibility ✅
 - Save button feedback added ✅
-- "Resume not found" flash eliminated ✅
-- Tutorial persistence for returning users ✅
-- Live preview shows formatted template ✅
+- "Resume not found" flash eliminated with proper loading states ✅
+- Tutorial persistence for returning users (localStorage flags) ✅
+- Live preview with empty state and real-time updates ✅
+- Duplicate toast notifications fixed (removed from providers.tsx) ✅
+- Professional badge positioning fixed in preview ✅
+- Job URL auto-fill feature (paste URL → extract job details) ✅
+- Smooth upload redirect with transition message ✅
 
 ## What's NOT Done Yet
 - Stripe integration for payments (FREE/PREMIUM plans exist in schema)
@@ -50,9 +55,25 @@
 - Error boundaries
 - Resume versioning UI
 
+## Latest Fixes (2/18/26)
+
+### Round 1 - Core Auto-fill & UI Fixes
+- **Auto-fill null byte error**: Fixed by sanitizing PDF text to remove \u0000 and control characters
+- **PDF parsing accuracy**: Replaced regex parsing with OpenAI GPT-4o-mini for intelligent extraction
+- **Tutorial persistence**: Fixed localStorage flag handling (tutorial_completed, tutorial_dismissed, tutorial_seen)
+- **Duplicate toasts**: Removed duplicate Toaster from providers.tsx, kept only in layout.tsx
+- **Resume not found flash**: Added proper loading state management (isDataLoading flag)
+- **Live preview**: Added empty state, fixed data display, fixed Professional badge overlap
+
+### Round 2 - Polish & Feature Additions
+- **Work Experience parsing**: Updated OpenAI prompt to extract ACTUAL job data, not placeholders
+- **Education parsing**: Fixed prompt to extract real school names and programs from resume text
+- **Live preview sections**: Fixed experience/education display to show all entries with proper formatting
+- **Job URL auto-fill**: Added new feature to paste job posting URL and auto-extract details using cheerio + OpenAI
+- **Upload redirect UX**: Reduced delay from 1.5s to 0.5s, added "Taking you to the editor..." toast message
+- **Section completion logic**: Identified issue (isComplete prop vs completionScore) - needs refactor to sync
+
 ## Known Issues to Investigate
-- Need to verify auto-fill actually works end-to-end (just fixed, not user-tested yet)
-- Need to verify save actually persists (feedback added, but persistence not confirmed)
 - PDF export may have issues (depends on old S3 references being fully cleaned up)
 - 21 security vulnerabilities need addressing
 - Some files are 600+ lines and need refactoring

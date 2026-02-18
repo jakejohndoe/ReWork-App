@@ -1,6 +1,7 @@
-// src/lib/pdf-extractor.ts (FIXED FOR NORMAL CASE NAMES)
+// src/lib/pdf-extractor.ts - AI-powered parsing with null byte sanitization
 
 import pdf from 'pdf-parse';
+import { openai } from './openai';
 
 interface ExtractedContact {
   fullName?: string;
@@ -42,32 +43,36 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
   try {
     console.log('📄 Starting PDF text extraction with pdf-parse...');
     console.log('📄 Buffer size:', pdfBuffer.length, 'bytes');
-    
+
     const data = await pdf(pdfBuffer, {
       max: 0,
       version: 'v1.10.100',
     });
-    
+
     console.log('📖 PDF parsed successfully:');
     console.log('📄 Pages:', data.numpages);
     console.log('📝 Text length:', data.text.length);
     console.log('ℹ️ PDF info:', data.info?.Title || 'No title');
-    
+
     if (!data.text || data.text.length === 0) {
       throw new Error('No text content extracted from PDF - file may be image-based or corrupted');
     }
-    
-    // Preserve more structure in the text
-    const cleanText = data.text
-      .replace(/\r\n/g, '\n')
+
+    // CRITICAL FIX: Sanitize text by removing null bytes and non-printable characters
+    // PostgreSQL cannot handle \u0000 and other control characters
+    const sanitizedText = data.text
+      .replace(/\u0000/g, '') // Remove null bytes
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove other control characters
+      .replace(/\r\n/g, '\n') // Normalize line endings
       .replace(/\r/g, '\n')
       .trim();
-    
-    console.log('✅ Text extraction complete:', cleanText.length, 'characters');
-    console.log('📝 Preview:', cleanText.substring(0, 200) + '...');
-    
-    return cleanText;
-    
+
+    console.log('✅ Text extraction complete:', sanitizedText.length, 'characters');
+    console.log('🧹 Sanitization removed', data.text.length - sanitizedText.length, 'problematic characters');
+    console.log('📝 Preview:', sanitizedText.substring(0, 200) + '...');
+
+    return sanitizedText;
+
   } catch (error) {
     console.error('❌ PDF extraction error:', error);
     throw new Error(`Failed to extract text from PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -75,12 +80,142 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
 }
 
 /**
- * Parse raw text into structured resume data
+ * Parse raw text into structured resume data using AI
  */
-export function parseResumeText(rawText: string): ExtractedResumeData {
-  console.log('🔍 Starting resume text parsing...');
+export async function parseResumeText(rawText: string): Promise<ExtractedResumeData> {
+  console.log('🔍 Starting AI-powered resume text parsing...');
   console.log('📝 Input text length:', rawText.length);
-  
+
+  try {
+    // Use OpenAI to parse the resume intelligently
+    const prompt = `Parse the resume text below and extract the ACTUAL information from it. Do NOT use placeholder or example data.
+
+Resume Text to Parse:
+${rawText.substring(0, 8000)} ${rawText.length > 8000 ? '...[truncated]' : ''}
+
+CRITICAL INSTRUCTIONS:
+1. Extract the REAL data from the resume text above - do NOT use generic placeholders
+2. For work experience: Find ALL actual job positions mentioned (e.g., "Independent Full-Stack Web Developer", "ReWork", "Welp")
+3. For education: Find ALL actual schools/programs mentioned (e.g., "Metana Fullstack Development Bootcamp")
+4. Do NOT return example data like "TechCorp Inc." or "Software Engineer" unless those exact words appear in the resume
+5. If a field is not present in the resume, use empty string "" or empty array []
+
+Return this JSON structure filled with the ACTUAL resume data:
+{
+  "contact": {
+    "fullName": "<actual full name from resume>",
+    "firstName": "<actual first name>",
+    "lastName": "<actual last name>",
+    "email": "<actual email if present>",
+    "phone": "<actual phone if present>",
+    "location": "<actual location if present>",
+    "linkedin": "<actual LinkedIn URL if present>",
+    "website": "<actual website if present>",
+    "github": "<actual GitHub URL if present>"
+  },
+  "professionalSummary": "<actual summary/objective text from resume if present>",
+  "workExperience": [
+    {
+      "company": "<actual company name from resume>",
+      "title": "<actual job title from resume>",
+      "startDate": "<actual start date from resume>",
+      "endDate": "<actual end date or 'Present'>",
+      "location": "<actual location if mentioned>",
+      "bullets": ["<actual achievement/responsibility from resume>"]
+    }
+  ],
+  "education": [
+    {
+      "school": "<actual school/institution name from resume>",
+      "degree": "<actual degree/certification from resume>",
+      "field": "<actual field of study if mentioned>",
+      "startDate": "<actual start year if mentioned>",
+      "endDate": "<actual end year if mentioned>",
+      "gpa": "<actual GPA if mentioned>"
+    }
+  ],
+  "skills": ["<actual skill from resume>", "<another actual skill>"]
+}
+
+Remember: Extract ONLY what's actually in the resume text. Do NOT make up placeholder data.`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a resume parser. Extract information accurately and return valid JSON only."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.1, // Very low for accuracy
+      max_tokens: 2000,
+    });
+
+    const response = completion.choices[0]?.message?.content?.trim();
+    if (!response) {
+      throw new Error('Empty response from OpenAI');
+    }
+
+    // Clean and parse the response
+    const cleanedResponse = response.replace(/```json\n?|\n?```/g, '').trim();
+    const parsed = JSON.parse(cleanedResponse);
+
+    console.log('🤖 AI parsing complete:', {
+      hasName: !!parsed.contact?.fullName,
+      hasEmail: !!parsed.contact?.email,
+      experienceCount: parsed.workExperience?.length || 0,
+      educationCount: parsed.education?.length || 0,
+      skillsCount: parsed.skills?.length || 0
+    });
+
+    // Transform to our internal format
+    const result: ExtractedResumeData = {
+      contact: {
+        fullName: parsed.contact?.fullName || parsed.contact?.firstName + ' ' + parsed.contact?.lastName || '',
+        email: parsed.contact?.email || '',
+        phone: parsed.contact?.phone || '',
+        location: parsed.contact?.location || '',
+        linkedin: parsed.contact?.linkedin || '',
+        website: parsed.contact?.website || parsed.contact?.github || '',
+      },
+      summary: parsed.professionalSummary || '',
+      experience: (parsed.workExperience || []).map((exp: any) => ({
+        title: exp.title || '',
+        company: exp.company || '',
+        startDate: exp.startDate || '',
+        endDate: exp.endDate || '',
+        description: Array.isArray(exp.bullets) ? exp.bullets.join(' • ') : exp.description || '',
+      })),
+      education: (parsed.education || []).map((edu: any) => ({
+        degree: edu.degree || '',
+        school: edu.school || '',
+        year: edu.endDate || edu.year || '',
+        gpa: edu.gpa || '',
+      })),
+      skills: parsed.skills || [],
+      rawText: rawText,
+    };
+
+    return result;
+
+  } catch (error) {
+    console.error('❌ AI parsing failed, falling back to regex parsing:', error);
+    // Fallback to regex parsing if AI fails
+    return parseResumeTextFallback(rawText);
+  }
+}
+
+/**
+ * Fallback regex-based parsing (original method)
+ */
+function parseResumeTextFallback(rawText: string): ExtractedResumeData {
+  console.log('⚠️ Using fallback regex parsing...');
+  console.log('📝 Input text length:', rawText.length);
+
   const result: ExtractedResumeData = {
     contact: {},
     experience: [],
@@ -354,5 +489,5 @@ function extractSkills(text: string): string[] {
  */
 export async function extractAndParseResume(pdfBuffer: Buffer): Promise<ExtractedResumeData> {
   const rawText = await extractTextFromPDF(pdfBuffer);
-  return parseResumeText(rawText);
+  return await parseResumeText(rawText);
 }

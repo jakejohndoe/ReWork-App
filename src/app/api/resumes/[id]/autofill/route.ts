@@ -178,8 +178,11 @@ export async function POST(
     console.log('💾 Final structured contact data being saved:', structuredContent.contact);
 
     // Create JSON-safe metadata
+    // Also sanitize rawText one more time to be absolutely sure
     const originalContentData = {
-      rawText: extractedData.rawText,
+      rawText: extractedData.rawText
+        .replace(/\u0000/g, '') // Remove any remaining null bytes
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ''), // Remove control characters
       metadata: {
         originalFileName: resume.originalFileName || '',
         fileSize: resume.fileSize || 0,

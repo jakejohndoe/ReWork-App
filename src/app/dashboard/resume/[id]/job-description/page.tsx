@@ -15,8 +15,8 @@ import Link from "next/link"
 import { useJobDescriptionLoading } from "@/hooks/useMinimumLoading"
 import ResumeLoader from '@/components/resume-loader'
 import { useTutorial } from "@/components/tutorial/CustomTutorial"
-import { 
-  ArrowLeft, 
+import {
+  ArrowLeft,
   ArrowRight,
   Target,
   CheckCircle,
@@ -26,8 +26,11 @@ import {
   FileText,
   Save,
   Zap,
-  Clock
+  Clock,
+  Link as LinkIcon,
+  Loader2
 } from "lucide-react"
+import { toast } from "sonner"
 import { Logo, BetaBadge } from "@/components/ui/logo"
 
 export default function JobDescriptionPage() {
@@ -51,6 +54,8 @@ export default function JobDescriptionPage() {
   const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 })
   const [isMounted, setIsMounted] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [jobUrl, setJobUrl] = useState("")
+  const [isParsingUrl, setIsParsingUrl] = useState(false)
 
   // Client-side mount check
   useEffect(() => {
@@ -81,6 +86,52 @@ export default function JobDescriptionPage() {
     if (length < 300) return { color: 'text-yellow-400', message: 'Good start! More details = better optimization', icon: '⚡' };
     if (length < 600) return { color: 'text-green-400', message: 'Great! Perfect amount of detail', icon: '✅' };
     return { color: 'text-cyan-400', message: 'Excellent! Very detailed job description', icon: '🎯' };
+  };
+
+  // Handle job URL auto-fill
+  const handleUrlParse = async () => {
+    if (!jobUrl.trim()) {
+      toast.error('Please enter a job posting URL');
+      return;
+    }
+
+    setIsParsingUrl(true);
+
+    try {
+      const response = await fetch('/api/job-url/parse', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: jobUrl.trim() })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Auto-fill the form fields
+        if (data.data.jobTitle) setJobTitle(data.data.jobTitle);
+        if (data.data.company) setCompanyName(data.data.company);
+        if (data.data.location) setJobLocation(data.data.location);
+        if (data.data.jobDescription) setJobDescription(data.data.jobDescription);
+
+        toast.success('Job details extracted successfully!', {
+          description: 'Review and edit the information as needed'
+        });
+
+        // Clear the URL field after successful extraction
+        setJobUrl('');
+      } else {
+        throw new Error(data.error || 'Failed to parse job URL');
+      }
+    } catch (error) {
+      console.error('Error parsing job URL:', error);
+      toast.error('Failed to extract job details', {
+        description: 'Please check the URL or enter details manually'
+      });
+    } finally {
+      setIsParsingUrl(false);
+    }
   };
 
   // ✅ FIXED: Load existing job description with minimum loading time
@@ -305,6 +356,54 @@ export default function JobDescriptionPage() {
                 </p>
               </div>
             </div>
+
+            {/* Job URL Auto-fill */}
+            <Card className={`glass-card border-white/10 hover:scale-[1.01] transition-all duration-300 mb-6 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '150ms' }}>
+              <CardContent className="py-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <LinkIcon className="w-4 h-4 text-cyan-400" />
+                      <Label className="text-slate-300">Paste job posting URL for auto-fill (optional)</Label>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={jobUrl}
+                        onChange={(e) => setJobUrl(e.target.value)}
+                        placeholder="https://example.com/job-posting"
+                        className="glass-input flex-1"
+                        disabled={isParsingUrl}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !isParsingUrl) {
+                            handleUrlParse();
+                          }
+                        }}
+                      />
+                      <Button
+                        onClick={handleUrlParse}
+                        disabled={isParsingUrl || !jobUrl.trim()}
+                        className="btn-gradient px-4"
+                      >
+                        {isParsingUrl ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Extracting...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Auto-fill
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">
+                      We'll extract the job title, company, location, and description from the URL
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Enhanced Job Entry Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
