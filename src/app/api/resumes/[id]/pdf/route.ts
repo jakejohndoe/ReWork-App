@@ -3,16 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
-
-// Create S3 client directly
-const s3Client = new S3Client({
-  region: process.env.AWS_S3_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-})
+import { downloadFromStorage } from '@/lib/storage'
 
 export async function GET(
   request: NextRequest,
@@ -21,7 +12,7 @@ export async function GET(
   try {
     const { id } = await params;
     console.log('📄 Proxying PDF content for resume:', id);
-    
+
     // Check authentication
     const session = await getServerSession(authOptions)
     if (!session?.user?.email) {
@@ -48,80 +39,55 @@ export async function GET(
         id: true,
         s3Key: true,
         s3Bucket: true,
+        originalFileName: true,
         contentType: true,
-        originalFileName: true
       }
     })
 
     if (!resume) {
+      console.log('❌ Resume not found or user not authorized')
       return NextResponse.json({ error: 'Resume not found' }, { status: 404 })
     }
 
-    if (!resume.s3Key || !resume.s3Bucket) {
-      return NextResponse.json({ error: 'Resume file not found in storage' }, { status: 404 })
+    if (!resume.s3Key) {
+      console.log('❌ No storage key found for resume')
+      return NextResponse.json({ error: 'PDF file not found' }, { status: 404 })
     }
 
-    console.log('📥 Fetching PDF from S3:', resume.s3Key);
+    console.log('📥 Downloading PDF from Supabase Storage:', resume.s3Key);
 
-    // Get PDF content from S3
-    const command = new GetObjectCommand({
-      Bucket: resume.s3Bucket,
-      Key: resume.s3Key,
-    })
+    // Download file from Supabase Storage
+    const fileBuffer = await downloadFromStorage(resume.s3Key);
 
-    const response = await s3Client.send(command)
-    
-    if (!response.Body) {
-      return NextResponse.json({ error: 'PDF content not found' }, { status: 404 })
+    if (!fileBuffer) {
+      console.error('❌ Failed to download PDF from storage');
+      return NextResponse.json({
+        error: 'Failed to retrieve PDF'
+      }, { status: 500 })
     }
 
-    // Convert stream to buffer
-    const chunks: Uint8Array[] = []
-    const reader = response.Body.transformToWebStream().getReader()
-    
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      chunks.push(value)
-    }
-    
-    const buffer = Buffer.concat(chunks)
-    console.log('✅ PDF content loaded, size:', buffer.length);
+    console.log('✅ PDF downloaded successfully, size:', fileBuffer.length);
 
-    // Return PDF with proper CORS headers
-    return new NextResponse(buffer, {
+    // Return the PDF with proper headers for browser viewing
+    return new NextResponse(fileBuffer, {
       status: 200,
       headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Length': buffer.length.toString(),
+        'Content-Type': resume.contentType || 'application/pdf',
         'Content-Disposition': `inline; filename="${resume.originalFileName || 'resume.pdf'}"`,
-        // CORS headers for PDF.js
+        'Content-Length': fileBuffer.length.toString(),
+        'Cache-Control': 'private, max-age=3600',
+        // CORS headers for iframe embedding
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Range',
-        'Access-Control-Expose-Headers': 'Content-Length, Content-Range',
-        // Caching headers
-        'Cache-Control': 'public, max-age=3600',
-        'ETag': `"${resume.id}"`,
-      }
-    })
+        'Access-Control-Allow-Methods': 'GET',
+        'X-Content-Type-Options': 'nosniff',
+      },
+    });
 
   } catch (error) {
-    console.error('❌ Error proxying PDF:', error)
-    return NextResponse.json(
-      { error: 'Failed to load PDF' },
-      { status: 500 }
-    )
+    console.error('❌ Error serving PDF:', error)
+    return NextResponse.json({
+      error: 'Failed to serve PDF',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
-}
-
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Range',
-    },
-  })
 }

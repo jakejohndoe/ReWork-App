@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { extractAndParseResume } from '@/lib/pdf-extractor';
-import { getSignedDownloadUrl } from '@/lib/s3';
+import { getSignedDownloadUrl, downloadFromStorage } from '@/lib/storage';
 
 export async function POST(
   request: NextRequest,
@@ -61,29 +61,31 @@ export async function POST(
       }, { status: 400 });
     }
 
-    // Get signed URL using your existing S3 function
-    console.log('🔗 Getting signed URL for S3 key:', resume.s3Key);
-    const signedUrlResult = await getSignedDownloadUrl(resume.s3Key);
-    
-    // ✅ FIXED: Properly check the result and handle the URL
-    if (!signedUrlResult.success || !signedUrlResult.url) {
-      throw new Error(`Failed to get signed URL: ${signedUrlResult.error || 'Unknown error'}`);
-    }
+    // Try direct download from Supabase Storage first
+    console.log('📥 Downloading PDF directly from Supabase Storage...');
+    let pdfBuffer = await downloadFromStorage(resume.s3Key);
 
-    const downloadUrl = signedUrlResult.url;
-    
-    // Fetch the PDF file from S3
-    console.log('📥 Downloading PDF from S3...');
-    const response = await fetch(downloadUrl);
-    
-    if (!response.ok) {
-      console.error('❌ Failed to fetch PDF from S3:', response.status, response.statusText);
-      throw new Error(`Failed to fetch PDF: ${response.statusText}`);
+    // If direct download fails, try with signed URL
+    if (!pdfBuffer) {
+      console.log('⚠️ Direct download failed, trying with signed URL...');
+      const signedUrlResult = await getSignedDownloadUrl(resume.s3Key);
+
+      if (!signedUrlResult.success || !signedUrlResult.url) {
+        console.error('❌ Failed to get signed URL from Supabase:', signedUrlResult.error);
+        throw new Error(`Failed to get signed URL: ${signedUrlResult.error || 'Unknown error'}`);
+      }
+
+      const downloadUrl = signedUrlResult.url;
+      const response = await fetch(downloadUrl);
+
+      if (!response.ok) {
+        console.error('❌ Failed to fetch PDF from Supabase:', response.status, response.statusText);
+        throw new Error(`Failed to fetch PDF: ${response.statusText}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      pdfBuffer = Buffer.from(arrayBuffer);
     }
-    
-    // Convert to buffer
-    const arrayBuffer = await response.arrayBuffer();
-    const pdfBuffer = Buffer.from(arrayBuffer);
     
     console.log('📄 PDF downloaded successfully:', {
       size: pdfBuffer.length,

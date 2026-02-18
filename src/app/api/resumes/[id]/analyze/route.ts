@@ -296,212 +296,110 @@ async function performWowFactorAnalysisWithOpenAI(
   contactInfo: ContactInfo | null
 ): Promise<EnhancedAnalysisResult> {
   
-  // 🚀 ENHANCED WOW FACTOR PROMPT - GUARANTEED 3+ SUGGESTIONS
-  const wowFactorPrompt = `
-You are an elite executive resume strategist and industry intelligence analyst with access to 2024 hiring data. Analyze this ${hasStructuredData ? 'STRUCTURED' : 'traditional'} resume against current market realities and provide insights that will genuinely surprise and delight the user.
+  // 🚀 FOCUSED RESUME GENERATION PROMPT
+  const resumeGenerationPrompt = `
+You are an expert resume writer specializing in creating ATS-optimized, compelling resumes that get interviews.
+Generate enhanced resume content based on the provided information.
 
-🎯 TARGET POSITION: ${jobTitle} at ${company}
+TARGET POSITION: ${jobTitle} at ${company}
 
-📊 CURRENT MARKET CONTEXT (Use this intelligence):
-- ${jobTitle} roles average 127 applications per posting in 2024
-- Top 15% of candidates typically have specific industry certifications and quantified achievements
-- ${company} type companies specifically value demonstrated impact and measurable results
-- Key differentiators that get interviews: industry-specific keywords, quantified achievements, and modern skill sets
-- Trending skills in this field are seeing 15-25% salary premiums
-
-📄 JOB REQUIREMENTS:
+JOB DESCRIPTION:
 ${jobDescription}
 
-📋 CANDIDATE'S RESUME${hasStructuredData ? ' (STRUCTURED FORMAT)' : ''}:
+CURRENT RESUME:
 ${structuredText}
 
 ${contactInfo ? `
-👤 VERIFIED CONTACT PROFILE:
-- Professional Identity: ${contactInfo.firstName} ${contactInfo.lastName}
-- Contact Quality: ${calculateContactQuality(contactInfo)}/100
-- Digital Presence: ${contactInfo.linkedin ? 'LinkedIn ✅' : 'LinkedIn ❌'} | ${contactInfo.website ? 'Portfolio ✅' : 'Portfolio ❌'} | ${contactInfo.githubUrl ? 'GitHub ✅' : 'GitHub ❌'}
+CONTACT INFORMATION:
+Name: ${contactInfo.firstName} ${contactInfo.lastName}
+Email: ${contactInfo.email || 'Not provided'}
+Phone: ${contactInfo.phone || 'Not provided'}
+LinkedIn: ${contactInfo.linkedin || 'Not provided'}
+Location: ${contactInfo.location || 'Not provided'}
 ` : ''}
 
-🎯 PROVIDE GAME-CHANGING ANALYSIS IN THIS JSON STRUCTURE:
+GENERATE ENHANCED RESUME CONTENT:
 
-⚠️ CRITICAL REQUIREMENT: YOU MUST PROVIDE MINIMUM 3 SUGGESTIONS, IDEALLY 4-5 SUGGESTIONS ⚠️
+Create a complete, professional resume with the following sections. Each bullet point in experience should use action verbs and include quantified results where possible (e.g., "Increased sales by 25%" or "Managed team of 12").
 
+Return JSON in this exact format:
 {
-  "matchScore": <0-100>,
-  "competitivePosition": {
-    "percentileRank": <1-99>,
-    "marketComparison": "top 25% of candidates for this role type",
-    "standoutFactors": ["unique strength 1", "unique strength 2"],
-    "riskFactors": ["potential weakness 1", "potential weakness 2"]
+  "optimizedContent": {
+    "professionalSummary": "3-4 sentence professional summary tailored to the job. Include key skills, years of experience, and value proposition",
+
+    "workExperience": [
+      {
+        "jobTitle": "Job Title",
+        "company": "Company Name",
+        "dates": "Start - End",
+        "location": "City, State",
+        "achievements": [
+          "Action verb + what you did + quantified result (3-5 bullet points per role)",
+          "Focus on achievements, not responsibilities",
+          "Use metrics, percentages, dollar amounts where possible",
+          "Include technologies/tools used"
+        ]
+      }
+    ],
+
+    "skills": {
+      "technical": ["List relevant technical skills from job description"],
+      "soft": ["List 3-5 key soft skills"],
+      "tools": ["List relevant software/tools"]
+    },
+
+    "education": [
+      {
+        "degree": "Degree Type",
+        "field": "Field of Study",
+        "school": "University Name",
+        "graduationYear": "Year",
+        "relevantCoursework": ["If recent grad or relevant to job"]
+      }
+    ]
   },
-  "industryIntelligence": {
-    "trendingSkills": ["skill1 (+23% demand)", "skill2 (+18% demand)"],
-    "salaryImpact": "These optimizations could increase salary potential by $8-15K",
-    "hiringPatterns": "Companies like ${company} typically prioritize proven results over years of experience",
-    "atsInsights": "This job posting shows 3 critical ATS keywords that could boost your ranking"
-  },
-  "matchedKeywords": ["keyword1", "keyword2"],
-  "missingKeywords": ["critical_missing1", "critical_missing2"],
+
+  "matchScore": 85,
+  "matchedKeywords": ["Extract 5-8 keywords from job description that appear in resume"],
+  "missingKeywords": ["List 3-5 important keywords from job that should be added"],
+
   "suggestions": [
     {
-      "section": "Professional Summary",
-      "type": "improve",
-      "priority": "critical",
-      "current": "existing summary excerpt",
-      "suggested": "Specific, actionable improvement with industry context",
-      "impact": "high",
-      "reason": "Deep explanation with market data and specific business impact",
-      "quantifiedBenefit": "+25% interview likelihood",
-      "implementationTime": "15 minutes",
-      "competitiveAdvantage": "This puts you ahead of 78% of other applicants"
-    },
-    {
-      "section": "Work Experience",
-      "type": "improve",
-      "priority": "high",
-      "current": "current experience description",
-      "suggested": "Enhanced experience with quantified achievements and impact metrics",
-      "impact": "high",
-      "reason": "Quantified achievements are the #1 factor that hiring managers look for",
-      "quantifiedBenefit": "+35% callback rate",
-      "implementationTime": "20 minutes",
-      "competitiveAdvantage": "Moves you from top 50% to top 20% of candidates"
-    },
-    {
-      "section": "Skills",
-      "type": "add",
-      "priority": "high",
-      "current": "current skills list",
-      "suggested": "Add trending industry skills and optimize keyword placement for ATS",
-      "impact": "medium",
-      "reason": "Missing 3 key skills that appear in 73% of similar job postings",
-      "quantifiedBenefit": "+18% ATS match score",
-      "implementationTime": "10 minutes",
-      "competitiveAdvantage": "Ensures you pass initial ATS screening"
-    },
-    {
-      "section": "Education",
-      "type": "reframe",
-      "priority": "medium",
-      "current": "current education format",
-      "suggested": "Highlight relevant coursework and academic achievements that align with job requirements",
-      "impact": "medium",
-      "reason": "Educational background can be positioned as relevant experience for career changers",
-      "quantifiedBenefit": "+12% relevancy score",
-      "implementationTime": "8 minutes",
-      "competitiveAdvantage": "Shows depth of knowledge beyond work experience"
-    },
-    {
-      "section": "Contact Information",
-      "type": "improve",
-      "priority": "medium",
-      "current": "basic contact details",
-      "suggested": "Add LinkedIn profile, professional portfolio, or GitHub to establish credibility",
-      "impact": "low",
-      "reason": "93% of recruiters check LinkedIn profiles - missing this is a red flag",
-      "quantifiedBenefit": "+8% professional credibility",
-      "implementationTime": "5 minutes",
-      "competitiveAdvantage": "Basic professional standard that 67% of candidates miss"
+      "section": "Quick Win",
+      "improvement": "One specific, actionable improvement they can make"
     }
-  ],
-  "strategicInsights": [
-    {
-      "insight": "Career positioning opportunity",
-      "explanation": "Detailed strategic advice based on market trends",
-      "actionItems": ["specific actionable step 1", "specific actionable step 2"]
-    }
-  ],
-  "atsScore": <0-100>,
-  "readabilityScore": <0-100>,
-  "completenessScore": <0-100>,
-  "categoryScores": {
-    "contact": <0-100>,
-    "experience": <0-100>,
-    "skills": <0-100>,
-    "education": <0-100>,
-    "keywords": <0-100>
-  },
-  "nextSteps": {
-    "immediate": ["High-impact change you can make in 5 minutes"],
-    "shortTerm": ["Optimization to complete within 1 hour"],
-    "strategic": ["Career development consideration for long-term growth"]
-  },
-  "confidenceMetrics": {
-    "interviewLikelihood": "67% based on current market analysis",
-    "salaryRange": "$75K-$95K based on experience level and market rates",
-    "timeToHire": "Typically 2-3 weeks for similar profiles in this market"
-  }
+  ]
 }
 
-🔥 MANDATORY SUGGESTION REQUIREMENTS:
-
-⚠️ YOU MUST PROVIDE AT LEAST 3 SUGGESTIONS, IDEALLY 4-5 ⚠️
-
-**REQUIRED SUGGESTION CATEGORIES (Choose at least 3):**
-
-1. **Professional Summary Enhancement** (ALWAYS INCLUDE)
-   - Rewrite for impact, industry keywords, and value proposition
-   - Priority: critical or high
-
-2. **Work Experience Optimization** (ALWAYS INCLUDE) 
-   - Add quantified achievements, metrics, and business impact
-   - Priority: critical or high
-
-3. **Skills & Keywords Alignment** (ALWAYS INCLUDE)
-   - Add missing keywords, trending skills, ATS optimization
-   - Priority: high or medium
-
-4. **Education/Certifications Enhancement** (INCLUDE IF RELEVANT)
-   - Reframe education as relevant experience
-   - Highlight certifications, relevant coursework
-   - Priority: medium
-
-5. **Contact Information Improvement** (INCLUDE IF BASIC)
-   - Add LinkedIn, portfolio, GitHub, professional email
-   - Priority: medium or low
-
-6. **ATS & Formatting Optimization** (INCLUDE IF NEEDED)
-   - Format improvements for better parsing
-   - Keyword density and placement
-   - Priority: medium
-
-**SUGGESTION QUALITY STANDARDS:**
-- Each suggestion must be specific and actionable
-- Include realistic implementation times (5-20 minutes)
-- Provide quantified benefits when possible (+X% interview rate)
-- Explain competitive advantage
-- Reference industry trends and market data
-
-**DISTRIBUTION TARGET:**
-- 1-2 Critical/High Priority suggestions (Professional Summary + Experience)
-- 2-3 High/Medium Priority suggestions (Skills, Education, ATS)
-- 0-1 Medium/Low Priority suggestions (Contact, Polish)
-
-MAKE EVERY SUGGESTION FEEL LIKE INSIDER KNOWLEDGE. Users should think "How did it know that?!" and "I would never have thought of this myself!"
-
-For ${jobTitle} at ${company}, focus on what actually gets candidates hired vs just interviewed, industry-specific success patterns, and competitive differentiation strategies that matter in 2024.
-`
+IMPORTANT GUIDELINES:
+- Write in past tense for previous roles, present tense for current role
+- Start each bullet with a strong action verb (Led, Developed, Increased, Managed, etc.)
+- Prioritize accomplishments that align with the target job
+- Include relevant keywords from the job description naturally
+- Keep bullet points concise (1-2 lines each)
+- Quantify results whenever possible
+- Ensure ATS compatibility (no tables, graphics, or unusual formatting)`
 
   try {
-    console.log('🔄 Sending ENHANCED WOW FACTOR analysis request to OpenAI...')
-    
+    console.log('🔄 Sending resume generation request to OpenAI...')
+
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o", // 🚀 UPGRADED: 10x better analysis quality, ~2-3x cost increase
+      model: "gpt-4o", // Using GPT-4o for quality resume generation
       messages: [
         {
           role: "system",
-          content: "You are an elite executive resume strategist with deep industry intelligence and market insights. Always respond with valid JSON only. You MUST provide at least 3 suggestions, ideally 4-5 suggestions. Provide genuinely surprising and valuable insights that feel like insider knowledge."
+          content: "You are an expert resume writer who creates compelling, ATS-optimized resumes that get interviews. Generate professional resume content with quantified achievements and strong action verbs. Respond with valid JSON only."
         },
         {
           role: "user",
-          content: wowFactorPrompt
+          content: resumeGenerationPrompt
         }
       ],
-      temperature: 0.5, // Balanced for creativity and consistency
-      max_tokens: 4500, // Increased for more detailed suggestions
+      temperature: 0.7, // Slightly higher for more varied, natural language
+      max_tokens: 4000, // Enough for complete resume content
     })
 
-    console.log('✅ ENHANCED WOW FACTOR OpenAI response received')
+    console.log('✅ Resume generation response received from OpenAI')
     
     const response = completion.choices[0]?.message?.content
     if (!response) {
@@ -515,14 +413,12 @@ For ${jobTitle} at ${company}, focus on what actually gets candidates hired vs j
     
     try {
       const analysis = JSON.parse(cleanedResponse) as EnhancedAnalysisResult
-      console.log('🎯 Parsed ENHANCED WOW FACTOR analysis:')
+      console.log('🎯 Parsed resume generation response:')
       console.log('  - Match score:', analysis.matchScore)
-      console.log('  - Competitive position:', analysis.competitivePosition?.percentileRank)
-      console.log('  - Industry insights:', analysis.industryIntelligence ? 'YES' : 'NO')
-      console.log('  - Strategic insights:', analysis.strategicInsights?.length || 0)
+      console.log('  - Optimized content:', analysis.optimizedContent ? 'YES' : 'NO')
       console.log('  - Keywords found:', analysis.matchedKeywords?.length || 0)
       console.log('  - Missing keywords:', analysis.missingKeywords?.length || 0)
-      console.log('  - Suggestions count:', analysis.suggestions?.length || 0, '(TARGET: 3+ suggestions)')
+      console.log('  - Suggestions count:', analysis.suggestions?.length || 0)
       
       // VALIDATE: Ensure minimum 3 suggestions
       if (!analysis.suggestions || analysis.suggestions.length < 3) {

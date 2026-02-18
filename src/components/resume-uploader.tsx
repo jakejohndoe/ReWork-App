@@ -6,6 +6,8 @@ import { Upload, FileText, X, CheckCircle, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Card } from '@/components/ui/card'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 interface ResumeUploaderProps {
   onUploadComplete?: (resumes: any[]) => void
@@ -20,20 +22,21 @@ interface UploadingFile {
   id: string
 }
 
-export default function ResumeUploader({ 
-  onUploadComplete, 
+export default function ResumeUploader({
+  onUploadComplete,
   maxFiles = 5,
-  className = '' 
+  className = ''
 }: ResumeUploaderProps) {
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([])
   const [dragDepth, setDragDepth] = useState(0)
   const [isDragActive, setIsDragActive] = useState(false)
   const dropzoneRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setDragDepth(0)
     setIsDragActive(false)
-    
+
     const newUploadingFiles = acceptedFiles.map(file => ({
       file,
       progress: 0,
@@ -48,41 +51,34 @@ export default function ResumeUploader({
         const formData = new FormData()
         formData.append('file', uploadingFile.file)
 
-        // Enhanced progress simulation that NEVER gets stuck
-        const progressInterval = setInterval(() => {
-          setUploadingFiles(prev => 
-            prev.map(f => {
-              if (f.id === uploadingFile.id) {
-                let increment;
-                // Different increment rates for different stages
-                if (f.progress < 30) {
-                  increment = Math.random() * 15 + 5 // 5-20% increments (fast start)
-                } else if (f.progress < 60) {
-                  increment = Math.random() * 10 + 3 // 3-13% increments (steady)
-                } else if (f.progress < 85) {
-                  increment = Math.random() * 5 + 2 // 2-7% increments (slower)
-                } else if (f.progress < 95) {
-                  increment = Math.random() * 2 + 0.5 // 0.5-2.5% increments (realistic final processing)
-                } else {
-                  increment = Math.random() * 0.5 + 0.1 // 0.1-0.6% increments (almost done, but still moving!)
-                }
-                
-                const newProgress = Math.min(f.progress + increment, 99.5) // Never quite reach 100 until server responds
-                return { ...f, progress: newProgress }
-              }
-              return f
-            })
+        // Update status to show we're uploading (not fake progress)
+        setUploadingFiles(prev =>
+          prev.map(f =>
+            f.id === uploadingFile.id
+              ? { ...f, progress: 20, status: 'uploading' }
+              : f
           )
-        }, 250) // Slightly faster updates for more responsiveness
+        )
 
+        // Make the actual upload request
         const response = await fetch('/api/resumes/upload', {
           method: 'POST',
           body: formData,
         })
 
-        clearInterval(progressInterval)
+        const data = await response.json()
 
-        if (response.ok) {
+        if (response.ok && data.success) {
+          // Update to processing state
+          setUploadingFiles(prev =>
+            prev.map(f =>
+              f.id === uploadingFile.id
+                ? { ...f, progress: 80, status: 'uploading' }
+                : f
+            )
+          )
+
+          // Mark as complete
           setUploadingFiles(prev =>
             prev.map(f =>
               f.id === uploadingFile.id
@@ -90,26 +86,49 @@ export default function ResumeUploader({
                 : f
             )
           )
+
+          // Show success message
+          toast.success(`Resume "${uploadingFile.file.name}" uploaded successfully!`)
+
+          // Redirect to the resume page or dashboard after a short delay
+          setTimeout(() => {
+            if (data.resume?.id) {
+              // If we have a resume ID, go to that resume's page
+              router.push(`/dashboard/resume/${data.resume.id}`)
+            } else {
+              // Otherwise go to dashboard
+              router.push('/dashboard')
+            }
+          }, 1500)
+
         } else {
-          throw new Error('Upload failed')
+          // Handle error response
+          const errorMessage = data.error || 'Upload failed'
+          throw new Error(errorMessage)
         }
       } catch (error) {
+        console.error('Upload error:', error)
+
+        // Update status to error
         setUploadingFiles(prev =>
           prev.map(f =>
             f.id === uploadingFile.id
-              ? { ...f, status: 'error' }
+              ? { ...f, status: 'error', progress: 0 }
               : f
           )
         )
+
+        // Show error message
+        const errorMessage = error instanceof Error ? error.message : 'Upload failed'
+        toast.error(errorMessage)
       }
     }
 
-    setTimeout(() => {
-      if (onUploadComplete) {
-        onUploadComplete([])
-      }
-    }, 1000)
-  }, [onUploadComplete])
+    // Call the onUploadComplete callback if provided
+    if (onUploadComplete) {
+      onUploadComplete(newUploadingFiles)
+    }
+  }, [onUploadComplete, router])
 
   const { getRootProps, getInputProps, isDragReject } = useDropzone({
     onDrop,
@@ -314,14 +333,14 @@ export default function ResumeUploader({
               }
             </p>
             
-            {/* Tech Specs Bar */}
+            {/* Tech Specs Bar - Clear File Requirements */}
             <div className={`
               flex justify-center space-x-6 text-xs transition-all duration-500
               ${isDragActive ? 'text-purple-300' : 'text-slate-500'}
             `}>
               <span className="flex items-center gap-1">
                 <div className={`w-2 h-2 rounded-full ${isDragActive ? 'bg-green-400 animate-pulse' : 'bg-slate-500'}`} />
-                pdf • docx
+                PDF • DOCX • DOC
               </span>
               <span className="flex items-center gap-1">
                 <div className={`w-2 h-2 rounded-full ${isDragActive ? 'bg-cyan-400 animate-pulse' : 'bg-slate-500'}`} />
@@ -329,7 +348,7 @@ export default function ResumeUploader({
               </span>
               <span className="flex items-center gap-1">
                 <div className={`w-2 h-2 rounded-full ${isDragActive ? 'bg-purple-400 animate-pulse' : 'bg-slate-500'}`} />
-                10mb each
+                10MB max size
               </span>
             </div>
           </div>
@@ -454,52 +473,27 @@ export default function ResumeUploader({
                             )}
                           </div>
                           
-                          {/* Enhanced AI Processing Status with Engaging Messages */}
+                          {/* Real Upload Status Messages */}
                           <div className="flex items-center justify-between text-xs mt-1">
                             <div className="flex items-center gap-1">
-                              {uploadingFile.progress < 20 && (
+                              {uploadingFile.progress <= 20 && (
                                 <span className="text-cyan-400 animate-pulse flex items-center gap-1">
-                                  <span>🔍</span> Scanning document...
+                                  <span>📤</span> Uploading to server...
                                 </span>
                               )}
-                              {uploadingFile.progress >= 20 && uploadingFile.progress < 40 && (
+                              {uploadingFile.progress > 20 && uploadingFile.progress < 80 && (
                                 <span className="text-purple-400 animate-pulse flex items-center gap-1">
-                                  <span>🧠</span> AI reading content...
+                                  <span>⚙️</span> Processing file...
                                 </span>
                               )}
-                              {uploadingFile.progress >= 40 && uploadingFile.progress < 60 && (
-                                <span className="text-blue-400 animate-pulse flex items-center gap-1">
-                                  <span>⚡</span> Parsing experience...
-                                </span>
-                              )}
-                              {uploadingFile.progress >= 60 && uploadingFile.progress < 75 && (
+                              {uploadingFile.progress >= 80 && uploadingFile.progress < 100 && (
                                 <span className="text-emerald-400 animate-pulse flex items-center gap-1">
-                                  <span>✨</span> Enhancing keywords...
+                                  <span>✨</span> Finalizing...
                                 </span>
                               )}
-                              {uploadingFile.progress >= 75 && uploadingFile.progress < 85 && (
-                                <span className="text-amber-400 animate-pulse flex items-center gap-1">
-                                  <span>🎯</span> Optimizing format...
-                                </span>
-                              )}
-                              {uploadingFile.progress >= 85 && uploadingFile.progress < 92 && (
-                                <span className="text-pink-400 animate-pulse flex items-center gap-1">
-                                  <span>🔧</span> Fine-tuning details...
-                                </span>
-                              )}
-                              {uploadingFile.progress >= 92 && uploadingFile.progress < 96 && (
-                                <span className="text-indigo-400 animate-pulse flex items-center gap-1">
-                                  <span>🎨</span> Polishing perfection...
-                                </span>
-                              )}
-                              {uploadingFile.progress >= 96 && uploadingFile.progress < 99 && (
-                                <span className="text-violet-400 animate-pulse flex items-center gap-1">
-                                  <span>🚀</span> Adding secret sauce...
-                                </span>
-                              )}
-                              {uploadingFile.progress >= 99 && (
+                              {uploadingFile.progress >= 100 && (
                                 <span className="text-green-400 animate-bounce flex items-center gap-1">
-                                  <span>🎉</span> Almost perfect...
+                                  <span>✅</span> Complete! Redirecting...
                                 </span>
                               )}
                             </div>

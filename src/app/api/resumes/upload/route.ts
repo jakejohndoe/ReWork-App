@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { uploadToS3, generateS3Key, getContentType } from '@/lib/s3'
+import { uploadToS3, generateS3Key, getContentType } from '@/lib/storage'
 import { generatePDFThumbnail } from '@/lib/pdf-thumbnail-generator'
 
 export async function POST(request: NextRequest) {
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
         
         // S3 storage info
         s3Key,
-        s3Bucket: process.env.AWS_S3_BUCKET_NAME,
+        s3Bucket: 'resumes', // Supabase bucket name
         originalFileName: file.name,
         fileSize: file.size,
         contentType: file.type,
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
             fileType: file.type,
             uploadedAt: new Date().toISOString(),
             s3Key,
-            s3Bucket: process.env.AWS_S3_BUCKET_NAME,
+            s3Bucket: 'resumes', // Supabase bucket name
             extractionStatus: 'pending',
           }
         },

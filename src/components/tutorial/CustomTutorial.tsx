@@ -152,13 +152,15 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [session])
 
-  // Auto-start tutorial for new users on dashboard
+  // Auto-start tutorial for new users on dashboard (only once)
   useEffect(() => {
     if (session?.user?.email && pathname === '/dashboard') {
       const tutorialCompleted = localStorage.getItem(`tutorial_completed_${session.user.email}`)
       const hasSeenTutorial = localStorage.getItem(`tutorial_seen_${session.user.email}`)
-      
-      if (!tutorialCompleted && !hasSeenTutorial) {
+      const tutorialDismissed = localStorage.getItem(`tutorial_dismissed_${session.user.email}`)
+
+      // Only show tutorial if: not completed, not dismissed, and not seen before
+      if (!tutorialCompleted && !tutorialDismissed && !hasSeenTutorial) {
         localStorage.setItem(`tutorial_seen_${session.user.email}`, 'true')
         setTimeout(() => {
           setTutorialActive(true)

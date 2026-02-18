@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -42,33 +43,56 @@ import {
 } from "lucide-react"
 import { Logo, BetaBadge } from "@/components/ui/logo"
 
-// Simple Resume Preview Component
+// Professional Resume Preview Component
 function SimpleResumePreview({ resumeData, className = "" }: { resumeData: any, className?: string }) {
   const extractName = (contactInfo?: string | ContactInfo) => {
     // Handle structured contact info
     if (contactInfo && typeof contactInfo === 'object') {
       const structured = contactInfo as ContactInfo
-      return `${structured.firstName} ${structured.lastName}`.trim() || resumeData?.title || 'Resume Preview'
+      return `${structured.firstName} ${structured.lastName}`.trim() || resumeData?.title || 'Your Name'
     }
-    
+
     // Handle legacy string contact info
-    if (!contactInfo || typeof contactInfo !== 'string') return resumeData?.title || 'Resume Preview'
+    if (!contactInfo || typeof contactInfo !== 'string') return resumeData?.title || 'Your Name'
     const lines = contactInfo.split('\n').filter(line => line.trim())
-    const nameLine = lines.find(line => 
-      !line.includes('@') && 
+    const nameLine = lines.find(line =>
+      !line.includes('@') &&
       !line.match(/\d{3}[-.]?\d{3}[-.]?\d{4}/) &&
       line.length > 2
     )
-    return nameLine || resumeData?.title || 'Resume Preview'
+    return nameLine || resumeData?.title || 'Your Name'
   }
 
-  const truncateText = (text?: string, maxLength = 100) => {
+  const getContactDetails = (contactInfo?: string | ContactInfo) => {
+    if (contactInfo && typeof contactInfo === 'object') {
+      const structured = contactInfo as ContactInfo
+      return {
+        email: structured.email || '',
+        phone: structured.phone || '',
+        location: structured.location || ''
+      }
+    }
+
+    if (contactInfo && typeof contactInfo === 'string') {
+      const lines = contactInfo.split('\n').filter(line => line.trim())
+      return {
+        email: lines.find(line => line.includes('@')) || '',
+        phone: lines.find(line => line.match(/\d{3}[-.]?\d{3}[-.]?\d{4}/)) || '',
+        location: lines.find(line => !line.includes('@') && !line.match(/\d{3}[-.]?\d{3}[-.]?\d{4}/) && line.length > 5) || ''
+      }
+    }
+
+    return { email: '', phone: '', location: '' }
+  }
+
+  const truncateText = (text?: string, maxLength = 120) => {
     if (!text) return ''
     const cleaned = text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()
     return cleaned.length > maxLength ? cleaned.substring(0, maxLength) + '...' : cleaned
   }
 
   const name = extractName(resumeData?.contactInfo || resumeData?.contact)
+  const contact = getContactDetails(resumeData?.contactInfo || resumeData?.contact)
 
   return (
     <Card className={`glass-card border-white/10 hover:scale-[1.02] transition-all duration-300 ${className}`}>
@@ -85,58 +109,110 @@ function SimpleResumePreview({ resumeData, className = "" }: { resumeData: any, 
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="w-48 h-64 bg-white rounded-sm shadow-lg border border-gray-200 overflow-hidden relative transition-all duration-300 transform-gpu hover:shadow-xl hover:scale-[1.02] mx-auto group">
-          <div className="text-[8px] p-2 space-y-0.5 h-full overflow-hidden">
-            <div className="border-b border-gray-200 pb-1">
-              <h1 className="font-bold text-gray-900 truncate text-[6px]">
-                {name.toUpperCase()}
-              </h1>
-              {(resumeData?.contactInfo || resumeData?.contact) && (
-                <div className="text-gray-600 text-[5px]">
-                  {typeof (resumeData?.contactInfo || resumeData?.contact) === 'object' 
-                    ? `${(resumeData.contactInfo as ContactInfo).email} • ${(resumeData.contactInfo as ContactInfo).location}`
-                    : truncateText((resumeData?.contactInfo || resumeData?.contact).split('\n').slice(1).join(' '), 40)
-                  }
-                </div>
-              )}
+        <div className="w-full max-w-sm bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden relative transition-all duration-300 transform-gpu hover:shadow-2xl hover:scale-[1.02] mx-auto group">
+          {/* Resume Header */}
+          <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 text-white">
+            <h1 className="text-lg font-bold mb-1">{name}</h1>
+            <div className="space-y-1 text-xs opacity-90">
+              {contact.email && <div>{contact.email}</div>}
+              {contact.phone && <div>{contact.phone}</div>}
+              {contact.location && <div>{contact.location}</div>}
             </div>
+          </div>
+
+          {/* Resume Body */}
+          <div className="p-4 space-y-3 text-xs">
+            {/* Professional Summary */}
             {(resumeData?.summary || resumeData?.structuredSummary) && (
               <div>
-                <h2 className="font-semibold text-gray-800 uppercase tracking-wide text-[5px]">Summary</h2>
-                <p className="text-gray-700 text-[5px]">
-                  {resumeData?.structuredSummary ? 
-                    truncateText(resumeData.structuredSummary.summary, 30) :
-                    truncateText(resumeData.summary, 30)
+                <h2 className="font-semibold text-slate-800 uppercase tracking-wide text-xs border-b border-slate-200 pb-1 mb-2">
+                  Professional Summary
+                </h2>
+                <p className="text-slate-700 leading-relaxed text-xs">
+                  {resumeData?.structuredSummary ?
+                    truncateText(resumeData.structuredSummary.summary, 100) :
+                    truncateText(resumeData.summary, 100)
                   }
                 </p>
               </div>
             )}
+
+            {/* Work Experience */}
             {(resumeData?.experience || resumeData?.workExperience) && (
               <div>
-                <h2 className="font-semibold text-gray-800 uppercase tracking-wide text-[5px]">Experience</h2>
-                <div className="text-gray-700 text-[5px]">
-                  {resumeData?.workExperience ? 
-                    truncateText(resumeData.workExperience[0]?.jobTitle + ' - ' + resumeData.workExperience[0]?.company, 40) :
-                    truncateText(resumeData.experience, 40)
-                  }
+                <h2 className="font-semibold text-slate-800 uppercase tracking-wide text-xs border-b border-slate-200 pb-1 mb-2">
+                  Experience
+                </h2>
+                <div className="space-y-2">
+                  {resumeData?.workExperience ? (
+                    <div>
+                      <div className="font-medium text-slate-900 text-xs">
+                        {resumeData.workExperience[0]?.jobTitle}
+                      </div>
+                      <div className="text-slate-600 text-xs mb-1">
+                        {resumeData.workExperience[0]?.company} • {resumeData.workExperience[0]?.startDate} - {resumeData.workExperience[0]?.endDate}
+                      </div>
+                      <p className="text-slate-700 text-xs leading-relaxed">
+                        {truncateText(resumeData.workExperience[0]?.responsibilities, 80)}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-slate-700 text-xs leading-relaxed">
+                      {truncateText(resumeData.experience, 100)}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
+
+            {/* Education */}
             {(resumeData?.education || resumeData?.structuredEducation) && (
               <div>
-                <h2 className="font-semibold text-gray-800 uppercase tracking-wide text-[5px]">Education</h2>
-                <div className="text-gray-700 text-[5px]">
-                  {resumeData?.structuredEducation ? 
-                    truncateText(`${resumeData.structuredEducation[0]?.degree} - ${resumeData.structuredEducation[0]?.institution}`, 40) :
-                    truncateText(resumeData.education, 40)
+                <h2 className="font-semibold text-slate-800 uppercase tracking-wide text-xs border-b border-slate-200 pb-1 mb-2">
+                  Education
+                </h2>
+                <div className="text-slate-700 text-xs">
+                  {resumeData?.structuredEducation ? (
+                    <div>
+                      <div className="font-medium text-slate-900">
+                        {resumeData.structuredEducation[0]?.degree}
+                      </div>
+                      <div className="text-slate-600">
+                        {resumeData.structuredEducation[0]?.institution} • {resumeData.structuredEducation[0]?.graduationYear}
+                      </div>
+                    </div>
+                  ) : (
+                    truncateText(resumeData.education, 60)
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Skills */}
+            {(resumeData?.skills || resumeData?.structuredSkills) && (
+              <div>
+                <h2 className="font-semibold text-slate-800 uppercase tracking-wide text-xs border-b border-slate-200 pb-1 mb-2">
+                  Skills
+                </h2>
+                <div className="text-slate-700 text-xs">
+                  {resumeData?.structuredSkills ?
+                    Object.values(resumeData.structuredSkills).flat().slice(0, 6).join(', ') :
+                    truncateText(resumeData.skills, 80)
                   }
                 </div>
               </div>
             )}
           </div>
-          
+
           {/* Premium glow effect on hover */}
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-sm"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg"></div>
+
+          {/* Professional template indicator */}
+          <div className="absolute top-2 right-2">
+            <div className="bg-slate-900 text-white text-xs px-2 py-1 rounded-full font-medium">
+              Professional
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -689,11 +765,11 @@ export default function ResumeEditorPage() {
       })
 
       const data = await response.json()
-      
+
       if (data.success) {
-        setResume(prev => prev ? { 
-          ...prev, 
-          title: editedTitle, 
+        setResume(prev => prev ? {
+          ...prev,
+          title: editedTitle,
           currentContent: updatedContent,
           contactInfo: structuredData.contactInfo,
           workExperience: structuredData.workExperience,
@@ -702,11 +778,29 @@ export default function ResumeEditorPage() {
           professionalSummary: structuredData.professionalSummary
         } : null)
         setHasChanges(false)
+
+        // Show success toast with checkmark
+        toast.success('Resume saved successfully!', {
+          description: 'All changes have been saved',
+          duration: 3000,
+          icon: '✅'
+        })
+
         console.log('✅ Resume saved successfully')
       } else {
+        // Show error toast
+        toast.error('Failed to save resume', {
+          description: data.error || 'Please try again',
+          duration: 4000
+        })
         console.error('Failed to save resume:', data.error)
       }
     } catch (error) {
+      // Show error toast for network/other errors
+      toast.error('Error saving resume', {
+        description: 'Please check your connection and try again',
+        duration: 4000
+      })
       console.error('Error saving resume:', error)
     } finally {
       setSaving(false)
@@ -801,6 +895,11 @@ export default function ResumeEditorPage() {
         </div>
       </div>
     )
+  }
+
+  // Show loading state while data is being fetched or during minimum loading time
+  if (!shouldShowContent || !resume) {
+    return <ResumeLoader />
   }
 
   return (
