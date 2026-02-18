@@ -1,7 +1,3 @@
-// Enhanced Prisma schema with structured resume fields
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,22 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// NextAuth.js required models
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -51,151 +45,100 @@ model VerificationToken {
   @@map("verificationtokens")
 }
 
-// Core ReWork Models
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  plan          Plan      @default(FREE)
-
-  // Usage tracking
-  resumesCreated Int      @default(0)
-  lastActiveAt   DateTime @default(now())
-
-  // Relations
-  accounts     Account[]
-  sessions     Session[]
-  resumes      Resume[]
-  applications JobApplication[]
-  feedback     Feedback[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String           @id @default(cuid())
+  name           String?
+  email          String           @unique
+  emailVerified  DateTime?
+  image          String?
+  plan           Plan             @default(FREE)
+  resumesCreated Int              @default(0)
+  lastActiveAt   DateTime         @default(now())
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  accounts       Account[]
+  feedback       Feedback[]
+  applications   JobApplication[]
+  resumes        Resume[]
+  sessions       Session[]
 
   @@map("users")
 }
 
 model Resume {
-  id     String @id @default(cuid())
-  userId String
-  title  String
-
-  // LEGACY CONTENT STORAGE (keep for backward compatibility)
-  originalContent Json? // Parsed text from uploaded file
-  currentContent  Json  // Current editable content - LEGACY FORMAT
-
-  // NEW STRUCTURED CONTENT FIELDS
-  // Contact Information - structured fields for better AI analysis
-  contactInfo Json? // { firstName, lastName, email, phone, location, linkedin, website }
-  
-  // Professional Summary - enhanced with keywords and targeting
-  professionalSummary Json? // { summary, targetRole, keyStrengths, careerLevel }
-  
-  // Work Experience - structured job entries for precise AI matching
-  workExperience Json? // [{ id, jobTitle, company, startDate, endDate, location, achievements[], technologies[], isCurrentRole }]
-  
-  // Education - structured for ATS optimization
-  education Json? // [{ id, degree, field, institution, graduationYear, gpa, honors[], relevantCoursework[] }]
-  
-  // Skills - categorized for sophisticated AI analysis
-  skills Json? // { technical[], frameworks[], tools[], cloud[], databases[], soft[], certifications[] }
-  
-  // Projects - showcase relevant work for better job matching
-  projects Json? // [{ id, name, description, technologies[], url, achievements[], startDate, endDate }]
-  
-  // Additional Sections - flexible content for comprehensive profiles
-  additionalSections Json? // { certifications[], awards[], publications[], languages[], volunteer[] }
-
-  // METADATA AND OPTIMIZATION TRACKING
-  structuredDataVersion String? @default("1.0") // Track data format version for migrations
-  dataCompletionScore   Float?  // 0-100 score of how complete the structured data is
-  lastStructuredUpdate  DateTime? // When structured fields were last updated
-  
-  // File references (AWS S3)
-  originalFileUrl  String? // Legacy field - keep for backward compatibility
-  templateId       String? // Which template they're using
-  
-  // S3 FIELDS
-  s3Key            String? // S3 object key (e.g., "users/123/resumes/filename.pdf")
-  s3Bucket         String? // S3 bucket name
-  originalFileName String? // Original uploaded filename
-  fileSize         Int?    // File size in bytes
-  thumbnailUrl     String? // Thumbnail URL for preview
-  contentType      String? // MIME type (application/pdf, etc.)
-
-  // Metadata
-  isActive      Boolean   @default(true)
-  wordCount     Int?
-  lastOptimized DateTime?
-
-  // Relations
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  applications JobApplication[]
-  versions     ResumeVersion[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    String           @id @default(cuid())
+  userId                String
+  title                 String
+  originalContent       Json?
+  currentContent        Json
+  contactInfo           Json?
+  professionalSummary   Json?
+  workExperience        Json?
+  education             Json?
+  skills                Json?
+  projects              Json?
+  additionalSections    Json?
+  structuredDataVersion String?          @default("1.0")
+  dataCompletionScore   Float?
+  lastStructuredUpdate  DateTime?
+  originalFileUrl       String?
+  templateId            String?
+  s3Key                 String?
+  s3Bucket              String?
+  originalFileName      String?
+  fileSize              Int?
+  thumbnailUrl          String?
+  contentType           String?
+  isActive              Boolean          @default(true)
+  wordCount             Int?
+  lastOptimized         DateTime?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  applications          JobApplication[]
+  versions              ResumeVersion[]
+  user                  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("resumes")
 }
 
 model ResumeVersion {
-  id            String  @id @default(cuid())
-  resumeId      String
-  versionNumber Int
-  content       Json
-  changes       String? // Description of what changed
-
-  // NEW: Track both legacy and structured content versions
-  structuredContent Json? // Store structured version alongside legacy content
-  
-  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
+  id                String   @id @default(cuid())
+  resumeId          String
+  versionNumber     Int
+  content           Json
+  changes           String?
+  structuredContent Json?
+  createdAt         DateTime @default(now())
+  resume            Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 
   @@unique([resumeId, versionNumber])
   @@map("resume_versions")
 }
 
 model JobApplication {
-  id       String @id @default(cuid())
-  userId   String
-  resumeId String
-
-  // Job details
-  jobTitle       String
-  company        String
-  jobDescription String  @db.Text
-  jobUrl         String?
-
-  // ENHANCED AI Analysis with structured data support
-  optimizedContent     Json?     // AI-optimized resume content
-  optimizedStructured  Json?     // NEW: AI-optimized structured content
-  matchScore          Float?    // 0-100 compatibility score
-  categoryScores      Json?     // NEW: { technical: 85, experience: 92, education: 78, skills: 88, contact: 90, keywords: 75 }
-  keywords            String[]  // Extracted keywords
-  suggestions         Json?     // AI improvement suggestions
-  
-  // NEW: Enhanced analysis tracking
-  analysisVersion     String?   @default("1.0") // Track analysis algorithm version
-  lastAnalyzed        DateTime? // When AI analysis was last run
-
-  // Application tracking
-  status     ApplicationStatus @default(DRAFT)
-  appliedAt  DateTime?
-  responseAt DateTime?
-
-  // File output (AWS S3)
-  generatedPdfUrl String? // S3 URL of final PDF
-
-  // Relations
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  String            @id @default(cuid())
+  userId              String
+  resumeId            String
+  jobTitle            String
+  company             String
+  jobDescription      String
+  jobUrl              String?
+  optimizedContent    Json?
+  optimizedStructured Json?
+  matchScore          Float?
+  categoryScores      Json?
+  keywords            String[]
+  suggestions         Json?
+  analysisVersion     String?           @default("1.0")
+  lastAnalyzed        DateTime?
+  status              ApplicationStatus @default(DRAFT)
+  appliedAt           DateTime?
+  responseAt          DateTime?
+  generatedPdfUrl     String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  resume              Resume            @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("job_applications")
 }
@@ -204,22 +147,18 @@ model Feedback {
   id        String       @id @default(cuid())
   userId    String
   type      FeedbackType
-  message   String       @db.Text
+  message   String
   email     String?
   pageUrl   String
   userAgent String?
   resolved  Boolean      @default(false)
-  
-  // Relations
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
-  
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("feedback")
 }
 
-// Enums
 enum Plan {
   FREE
   PREMIUM
