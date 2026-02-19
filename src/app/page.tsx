@@ -131,8 +131,8 @@ export default function HomePage() {
       z-index: 1000;
       pointer-events: none;
       animation: floatSparkle 3s ease-out forwards;
-      color: #fbbf24;
-      text-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+      color: #e5e5e5;
+      text-shadow: 0 0 10px rgba(229, 229, 229, 0.4);
     `
     
     document.body.appendChild(sparkle)
@@ -169,14 +169,14 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-black relative overflow-hidden">
       {/* Floating Particles Background - Only render on client */}
       {isMounted && (
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[...Array(20)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-1 h-1 bg-cyan-400/20 rounded-full animate-pulse"
+              className="absolute w-1 h-1 bg-white/20 rounded-full animate-pulse"
               style={{
                 left: `${(i * 13 + 10) % 90 + 5}%`, // Deterministic positioning
                 top: `${(i * 17 + 15) % 80 + 10}%`, // Deterministic positioning
@@ -193,7 +193,7 @@ export default function HomePage() {
         <div 
           className="absolute inset-0 opacity-30 transition-all duration-1000"
           style={{
-            backgroundImage: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(139, 92, 246, 0.3) 0%, transparent 70%)`
+            backgroundImage: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(100, 100, 120, 0.2) 0%, transparent 70%)`
           }}
         />
       )}
@@ -213,19 +213,19 @@ export default function HomePage() {
             <div className="flex items-center justify-between">
               <Link href="/" className="flex items-center space-x-2 group">
                 <Logo size="xs" variant="simple" showBadge={false} className="group-hover:scale-110 transition-all duration-300" />
-                <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 group-hover:scale-105 transition-transform duration-300">ReWork</span>
+                <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 group-hover:scale-105 transition-transform duration-300">ReWork</span>
                 <BetaBadge size="xs" className="group-hover:scale-105 transition-transform duration-300" />
               </Link>
               <div className="flex items-center space-x-4">
                 {status === "loading" ? (
                   <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span className="text-slate-400">Loading...</span>
                   </div>
                 ) : session ? (
                   <div className="flex items-center space-x-3">
                     <div className="text-right hover:scale-105 transition-transform duration-200 group">
-                      <div className="text-sm text-white group-hover:text-cyan-300 transition-colors">
+                      <div className="text-sm text-white group-hover:text-gray-300 transition-colors">
                         {session.user?.name || session.user?.email || 'User'}
                       </div>
                       <div className="text-xs text-slate-400">
@@ -233,7 +233,7 @@ export default function HomePage() {
                       </div>
                     </div>
                     <Link href="/dashboard">
-                      <Button className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25 transition-all duration-300">Dashboard</Button>
+                      <Button className="bg-white text-black hover:bg-white/95 border-0 hover:scale-105 hover:shadow-lg hover:shadow-white/25 transition-all duration-300 font-semibold">Dashboard</Button>
                     </Link>
                     <Button 
                       onClick={() => signOut()} 
@@ -254,7 +254,7 @@ export default function HomePage() {
                     </Button>
                     <Button 
                       onClick={() => signIn()} 
-                      className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25 transition-all duration-300"
+                      className="bg-white text-black hover:bg-white/95 border-0 hover:scale-105 hover:shadow-lg hover:shadow-white/25 transition-all duration-300 font-semibold"
                     >
                       Get Started
                     </Button>
@@ -271,12 +271,12 @@ export default function HomePage() {
           <div ref={heroRef} className="text-center mb-20 relative">
             {/* Ultra-Premium AI Badge */}
             <div className={`mb-8 transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              <Badge className="bg-gradient-to-r from-purple-500/30 to-cyan-500/30 text-cyan-200 border border-cyan-400/40 px-6 py-3 hover:from-purple-500/40 hover:to-cyan-500/40 hover:border-cyan-400/60 hover:scale-105 transition-all duration-300 backdrop-blur-sm relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-cyan-400/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+              <Badge className="bg-gradient-to-r from-gray-700/30 to-gray-600/30 text-gray-200 border border-gray-400/40 px-6 py-3 hover:from-gray-700/40 hover:to-gray-600/40 hover:border-gray-400/60 hover:scale-105 transition-all duration-300 backdrop-blur-sm relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-gray-400/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
                 <span className="relative z-10 flex items-center gap-2 font-medium">
-                  <span className="text-cyan-300 animate-pulse">✦</span>
+                  <span className="text-white animate-pulse">✦</span>
                   AI-Powered Optimization
-                  <span className="text-purple-300 animate-bounce text-xs">●</span>
+                  <span className="text-gray-300 animate-bounce text-xs">●</span>
                 </span>
               </Badge>
             </div>
@@ -290,16 +290,16 @@ export default function HomePage() {
                   className="hover:scale-105 transition-transform duration-300 inline-block"
                   style={isMounted ? {
                     backgroundImage: `linear-gradient(45deg, 
-                      hsl(${180 + mousePosition.x * 0.1}, 70%, 60%) 0%,
-                      hsl(${200 + mousePosition.y * 0.05}, 80%, 70%) 25%,
-                      hsl(${220 + mousePosition.x * 0.05}, 75%, 65%) 50%,
-                      hsl(${240 + mousePosition.y * 0.1}, 85%, 75%) 75%,
-                      hsl(${260 + mousePosition.x * 0.08}, 80%, 70%) 100%)`,
+                      hsl(0, 0%, ${75 + mousePosition.x * 0.1}%) 0%,
+                      hsl(0, 0%, ${80 + mousePosition.y * 0.05}%) 25%,
+                      hsl(0, 0%, ${85 + mousePosition.x * 0.05}%) 50%,
+                      hsl(0, 0%, ${80 + mousePosition.y * 0.1}%) 75%,
+                      hsl(0, 0%, ${75 + mousePosition.x * 0.08}%) 100%)`,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text'
                   } : {
-                    backgroundImage: 'linear-gradient(45deg, hsl(200, 70%, 60%) 0%, hsl(220, 80%, 70%) 50%, hsl(240, 75%, 65%) 100%)',
+                    backgroundImage: 'linear-gradient(45deg, hsl(0, 0%, 75%) 0%, hsl(0, 0%, 85%) 50%, hsl(0, 0%, 90%) 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text'
@@ -313,14 +313,14 @@ export default function HomePage() {
                   className="hover:scale-105 transition-transform duration-300 inline-block"
                   style={isMounted ? {
                     backgroundImage: `linear-gradient(45deg, 
-                      hsl(${280 + mousePosition.x * 0.1}, 70%, 65%) 0%,
-                      hsl(${300 + mousePosition.y * 0.08}, 75%, 70%) 50%,
-                      hsl(${320 + mousePosition.x * 0.05}, 80%, 75%) 100%)`,
+                      hsl(0, 0%, ${70 + mousePosition.x * 0.1}%) 0%,
+                      hsl(0, 0%, ${75 + mousePosition.y * 0.08}%) 50%,
+                      hsl(0, 0%, ${70 + mousePosition.x * 0.05}%) 100%)`,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text'
                   } : {
-                    backgroundImage: 'linear-gradient(45deg, hsl(300, 70%, 65%) 0%, hsl(320, 75%, 70%) 100%)',
+                    backgroundImage: 'linear-gradient(45deg, hsl(0, 0%, 70%) 0%, hsl(0, 0%, 75%) 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text'
@@ -349,9 +349,9 @@ export default function HomePage() {
                     ref={ctaRef}
                     onMouseMove={handleCtaMouseMove}
                     onMouseLeave={handleCtaMouseLeave}
-                    className="relative px-8 py-4 text-lg font-medium text-white bg-gradient-to-r from-cyan-500 to-purple-600 rounded-lg overflow-hidden group transition-all duration-300 hover:shadow-xl hover:shadow-cyan-500/25"
+                    className="relative px-8 py-4 text-lg font-semibold text-black bg-white rounded-lg overflow-hidden group transition-all duration-300 hover:shadow-xl hover:shadow-white/25 hover:scale-105"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
                     <div className="relative z-10 flex items-center gap-2">
                       Create Resume
                       <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
@@ -365,9 +365,9 @@ export default function HomePage() {
                   onMouseMove={handleCtaMouseMove}
                   onMouseLeave={handleCtaMouseLeave}
                   onClick={() => signIn()}
-                  className="relative px-8 py-4 text-lg font-medium text-white bg-gradient-to-r from-cyan-500 to-purple-600 rounded-lg overflow-hidden group transition-all duration-300 hover:shadow-xl hover:shadow-cyan-500/25"
+                  className="relative px-8 py-4 text-lg font-semibold text-black bg-white rounded-lg overflow-hidden group transition-all duration-300 hover:shadow-xl hover:shadow-white/25 hover:scale-105"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
                   <div className="relative z-10 flex items-center gap-2">
                     Start Free Trial
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
@@ -386,10 +386,10 @@ export default function HomePage() {
           {/* Welcome Back Card for Signed-In Users */}
           {session && (
             <div className="mb-16">
-              <Card ref={welcomeCardRef} className="welcome-glow-target bg-gradient-to-br from-slate-800/50 via-purple-900/20 to-cyan-900/20 backdrop-blur-lg border border-white/20 hover:border-white/30 transition-all duration-500 hover:scale-[1.02] relative overflow-hidden group max-w-4xl mx-auto">
+              <Card ref={welcomeCardRef} className="welcome-glow-target bg-gradient-to-br from-gray-800/50 via-gray-900/20 to-black/30 backdrop-blur-lg border border-white/20 hover:border-white/30 transition-all duration-500 hover:scale-[1.02] relative overflow-hidden group max-w-4xl mx-auto">
                 {/* Animated Background */}
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 via-purple-400 to-cyan-400"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-gray-500/5 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-white via-gray-400 to-white"></div>
                 
                 {/* Sparkle Animation */}
                 {showSparkles && (
@@ -405,7 +405,7 @@ export default function HomePage() {
                           animationDuration: '2s'
                         }}
                       >
-                        <Sparkles className="w-4 h-4 text-cyan-300 opacity-70" />
+                        <Sparkles className="w-4 h-4 text-white opacity-70" />
                       </div>
                     ))}
                   </div>
@@ -422,7 +422,7 @@ export default function HomePage() {
                   )}
 
                   <div className="flex items-center justify-center gap-3 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-full flex items-center justify-center animate-pulse">
+                    <div className="w-12 h-12 bg-gradient-to-br from-white to-gray-400 rounded-full flex items-center justify-center animate-pulse">
                       <CheckCircle className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -440,24 +440,24 @@ export default function HomePage() {
                   <div className="grid md:grid-cols-3 gap-6 mb-8">
                     {/* Quick Action Cards */}
                     <div className="group/action">
-                      <div className="bg-slate-800/30 rounded-xl p-6 border border-white/10 hover:border-cyan-400/40 transition-all duration-300 hover:scale-105">
+                      <div className="bg-slate-800/30 rounded-xl p-6 border border-white/10 hover:border-gray-400/40 transition-all duration-300 hover:scale-105">
                         <div className="text-center">
-                          <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover/action:scale-110 transition-transform duration-300">
+                          <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-700 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover/action:scale-110 transition-transform duration-300">
                             <Upload className="w-6 h-6 text-white" />
                           </div>
-                          <h3 className="text-white font-semibold mb-1 group-hover/action:text-cyan-300 transition-colors">Create Resume</h3>
+                          <h3 className="text-white font-semibold mb-1 group-hover/action:text-gray-300 transition-colors">Create Resume</h3>
                           <p className="text-slate-400 text-sm group-hover/action:text-slate-300 transition-colors">Upload & Optimize</p>
                         </div>
                       </div>
                     </div>
 
                     <div className="group/action">
-                      <div className="bg-slate-800/30 rounded-xl p-6 border border-white/10 hover:border-purple-400/40 transition-all duration-300 hover:scale-105">
+                      <div className="bg-slate-800/30 rounded-xl p-6 border border-white/10 hover:border-gray-400/40 transition-all duration-300 hover:scale-105">
                         <div className="text-center">
-                          <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover/action:scale-110 transition-transform duration-300">
-                            <Zap className="w-6 h-6 text-white" />
+                          <div className="w-12 h-12 bg-gradient-to-br from-white to-gray-400 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover/action:scale-110 transition-transform duration-300">
+                            <Zap className="w-6 h-6 text-black" />
                           </div>
-                          <h3 className="text-white font-semibold mb-1 group-hover/action:text-purple-300 transition-colors">AI Optimize</h3>
+                          <h3 className="text-white font-semibold mb-1 group-hover/action:text-gray-300 transition-colors">AI Optimize</h3>
                           <p className="text-slate-400 text-sm group-hover/action:text-slate-300 transition-colors">Smart Enhancement</p>
                         </div>
                       </div>
@@ -466,7 +466,7 @@ export default function HomePage() {
                     <div className="group/action">
                       <div className="bg-slate-800/30 rounded-xl p-6 border border-white/10 hover:border-green-400/40 transition-all duration-300 hover:scale-105">
                         <div className="text-center">
-                          <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-teal-500 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover/action:scale-110 transition-transform duration-300">
+                          <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-800 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover/action:scale-110 transition-transform duration-300">
                             <FileText className="w-6 h-6 text-white" />
                           </div>
                           <h3 className="text-white font-semibold mb-1 group-hover/action:text-green-300 transition-colors">Browse Templates</h3>
@@ -479,7 +479,7 @@ export default function HomePage() {
                   {/* Action Button */}
                   <div className="text-center">
                     <Link href="/dashboard">
-                      <Button className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/25 transition-all duration-300 px-8 py-3 text-lg font-medium group">
+                      <Button className="bg-white text-black hover:bg-white/95 border-0 hover:scale-105 hover:shadow-lg hover:shadow-white/25 transition-all duration-300 px-8 py-3 text-lg font-semibold group">
                         Go to Dashboard
                         <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                       </Button>
@@ -525,11 +525,11 @@ export default function HomePage() {
                 </Card>
 
                 {/* Resumes Optimized */}
-                <Card className="bg-slate-800/30 backdrop-blur-sm border-purple-400/20 hover:border-purple-400/40 transition-all duration-500 hover:scale-105 group relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <Card className="bg-slate-800/30 backdrop-blur-sm border-gray-400/20 hover:border-gray-400/40 transition-all duration-500 hover:scale-105 group relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   <CardContent className="pt-6 relative z-10">
                     <div className="text-center">
-                      <div className="text-3xl font-bold text-purple-400 mb-2 group-hover:scale-110 transition-transform duration-300">
+                      <div className="text-3xl font-bold text-gray-400 mb-2 group-hover:scale-110 transition-transform duration-300">
                         {session.user?.resumesOptimized || 0}
                       </div>
                       <div className="text-sm text-slate-300 group-hover:text-white transition-colors duration-300">
@@ -545,7 +545,7 @@ export default function HomePage() {
           {/* 3D Tilt Feature Cards */}
           <div className="grid md:grid-cols-3 gap-8 mb-24">
             {[
-              { icon: Sparkles, title: "AI Optimization", desc: "Smart keyword matching and content optimization tailored to any job description", color: "from-blue-400 to-purple-500", hoverColor: "primary" },
+              { icon: Sparkles, title: "AI Optimization", desc: "Smart keyword matching and content optimization tailored to any job description", color: "from-gray-400 to-gray-600", hoverColor: "primary" },
               { icon: FileText, title: "Professional Templates", desc: "ATS-friendly templates with real-time color customization and perfect formatting", color: "from-teal-400 to-blue-500", hoverColor: "secondary" },
               { icon: Download, title: "Instant Export", desc: "Download polished, job-specific PDFs ready for immediate application", color: "from-green-400 to-teal-500", hoverColor: "green" }
             ].map((feature, index) => (
@@ -570,7 +570,7 @@ export default function HomePage() {
                   e.currentTarget.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)'
                 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-gray-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <CardHeader className="text-center relative z-10">
                   <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl mb-6 mx-auto animate-float flex items-center justify-center group-hover:scale-110 transition-transform duration-300`} style={{ animationDelay: `${index}s` }}>
                     <feature.icon className="w-8 h-8 text-white group-hover:animate-pulse" />
@@ -587,7 +587,7 @@ export default function HomePage() {
           {/* Enhanced Social Proof / Value Props */}
           <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
             <Card className="bg-slate-800/40 backdrop-blur-sm border-primary-400/20 hover:border-primary-400/40 transition-all duration-500 hover:scale-105 group relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <CardHeader className="relative z-10">
                 <CardTitle className="text-primary-400 flex items-center gap-3 text-xl group-hover:text-primary-300 transition-colors duration-300">
                   <Target className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
@@ -613,7 +613,7 @@ export default function HomePage() {
             </Card>
 
             <Card className="bg-slate-800/40 backdrop-blur-sm border-secondary-400/20 hover:border-secondary-400/40 transition-all duration-500 hover:scale-105 group relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <CardHeader className="relative z-10">
                 <CardTitle className="text-secondary-400 flex items-center gap-3 text-xl group-hover:text-secondary-300 transition-colors duration-300">
                   <Clock className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
@@ -625,7 +625,7 @@ export default function HomePage() {
                   {[
                     { text: "Upload your current resume", time: "1 minute", color: "green" },
                     { text: "AI analyzes and optimizes content", time: "2-3 minutes", color: "blue" },
-                    { text: "Customize colors and template", time: "2 minutes", color: "purple" },
+                    { text: "Customize colors and template", time: "2 minutes", color: "gray" },
                     { text: "Download professional PDF", time: "instant", color: "teal" }
                   ].map((step, index) => (
                     <div key={index} className="flex justify-between items-center hover:bg-slate-800/30 p-3 rounded-lg transition-all duration-300 hover:scale-[1.02] group/item">
@@ -637,7 +637,7 @@ export default function HomePage() {
                     {!session && (
                       <Button 
                         onClick={() => signIn()} 
-                        className="w-full bg-gradient-to-r from-purple-500 to-cyan-600 hover:from-purple-400 hover:to-cyan-500 text-white border-0 group hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25"
+                        className="w-full bg-white text-black hover:bg-white/95 border-0 group hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-white/25 font-semibold"
                         size="sm"
                       >
                         Start Your Free Trial

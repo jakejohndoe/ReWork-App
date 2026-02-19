@@ -10,72 +10,64 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#f0fdff',
-          100: '#ccf7fe',
-          200: '#99eefd',
-          300: '#60defa',
-          400: '#2cc7d0',  // Your cyan
-          500: '#1ba1aa',
-          600: '#1a8186',
-          700: '#1d6a6e',
-          800: '#1e5559',
-          900: '#1e484c',
-          DEFAULT: '#2cc7d0',
-          foreground: '#ffffff',
-        },
-        secondary: {
-          50: '#faf5ff',
-          100: '#f3e8ff',
-          200: '#e9d5ff',
-          300: '#d8b4fe',
-          400: '#c084fc',
-          500: '#8b5cf6',  // Your purple
-          600: '#7c3aed',
-          700: '#6d28d9',
-          800: '#5b21b6',
-          900: '#4c1d95',
-          DEFAULT: '#8b5cf6',
-          foreground: '#ffffff',
-        },
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+        // Dark minimal color system
+        background: '#0A0A0B',
+        foreground: '#E8E8ED',
         card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))'
+          DEFAULT: 'rgba(255, 255, 255, 0.03)',
+          foreground: '#E8E8ED'
         },
         popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))'
+          DEFAULT: 'rgba(255, 255, 255, 0.03)',
+          foreground: '#E8E8ED'
+        },
+        primary: {
+          DEFAULT: '#FFFFFF',
+          foreground: '#0A0A0B',
+        },
+        secondary: {
+          DEFAULT: 'rgba(255, 255, 255, 0.06)',
+          foreground: '#E8E8ED',
         },
         muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))'
+          DEFAULT: 'rgba(255, 255, 255, 0.25)',
+          foreground: 'rgba(255, 255, 255, 0.45)'
         },
         accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))'
+          DEFAULT: '#34D399',
+          foreground: '#0A0A0B'
         },
         destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))'
+          DEFAULT: '#EF4444',
+          foreground: '#FFFFFF'
         },
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        chart: {
-          '1': 'hsl(var(--chart-1))',
-          '2': 'hsl(var(--chart-2))',
-          '3': 'hsl(var(--chart-3))',
-          '4': 'hsl(var(--chart-4))',
-          '5': 'hsl(var(--chart-5))'
-        }
+        border: 'rgba(255, 255, 255, 0.08)',
+        input: 'rgba(255, 255, 255, 0.06)',
+        ring: 'rgba(255, 255, 255, 0.2)',
+
+        // Additional colors
+        success: '#34D399',
+        error: '#EF4444',
+        premium: 'rgba(99, 102, 241, 0.8)',
+        surface: 'rgba(255, 255, 255, 0.03)',
+        'text-primary': '#E8E8ED',
+        'text-secondary': 'rgba(255, 255, 255, 0.45)',
+        'text-muted': 'rgba(255, 255, 255, 0.25)',
       },
-      backgroundImage: {
-        'gradient-primary': 'linear-gradient(135deg, #2cc7d0, #8b5cf6)',
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'glass': 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+      fontFamily: {
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Inter', 'system-ui', 'sans-serif'],
+      },
+      fontSize: {
+        'label': '11px',
+        'body-sm': '12px',
+        'body': '13px',
+        'section': '14px',
+        'header': '15px',
+        'title': '18px',
+      },
+      letterSpacing: {
+        'tight': '-0.3px',
+        'normal': '-0.01em',
       },
       backdropBlur: {
         xs: '2px',

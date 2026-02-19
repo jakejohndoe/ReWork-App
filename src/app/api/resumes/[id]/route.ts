@@ -50,6 +50,14 @@ export async function GET(
   }
 }
 
+// PUT method for complete updates
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return PATCH(request, { params });
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -124,12 +132,16 @@ export async function PATCH(
       updateData.contactInfo = contactInfo
     }
 
-    if (professionalSummary !== undefined) {
-      updateData.professionalSummary = professionalSummary
+    // Map 'summary' field to 'professionalSummary' for compatibility
+    const summary = body.summary || body.professionalSummary;
+    if (summary !== undefined) {
+      updateData.professionalSummary = summary
     }
 
-    if (workExperience !== undefined) {
-      updateData.workExperience = workExperience
+    // Map 'experience' field to 'workExperience' for compatibility
+    const experience = body.experience || body.workExperience;
+    if (experience !== undefined) {
+      updateData.workExperience = experience
     }
 
     if (education !== undefined) {
@@ -138,6 +150,15 @@ export async function PATCH(
 
     if (skills !== undefined) {
       updateData.skills = skills
+    }
+
+    // Handle certifications and achievements if provided
+    if (body.certifications !== undefined) {
+      updateData.certifications = body.certifications
+    }
+
+    if (body.achievements !== undefined) {
+      updateData.achievements = body.achievements
     }
 
     if (projects !== undefined) {

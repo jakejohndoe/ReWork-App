@@ -56,6 +56,7 @@ export default function JobDescriptionPage() {
   const [isLoaded, setIsLoaded] = useState(false)
   const [jobUrl, setJobUrl] = useState("")
   const [isParsingUrl, setIsParsingUrl] = useState(false)
+  const [isTailoring, setIsTailoring] = useState(false)
 
   // Client-side mount check
   useEffect(() => {
@@ -122,7 +123,15 @@ export default function JobDescriptionPage() {
         // Clear the URL field after successful extraction
         setJobUrl('');
       } else {
-        throw new Error(data.error || 'Failed to parse job URL');
+        // Check if it's a blocked site error
+        if (data.isBlockedSite) {
+          toast.error(data.error || 'Site blocks automated access', {
+            description: data.details || 'Please copy and paste the job description manually',
+            duration: 5000
+          });
+        } else {
+          throw new Error(data.error || 'Failed to parse job URL');
+        }
       }
     } catch (error) {
       console.error('Error parsing job URL:', error);
@@ -222,9 +231,48 @@ export default function JobDescriptionPage() {
 
   const handleNext = async () => {
     const saved = await handleSaveJobDescription()
-    
+
     if (saved) {
-      router.push(`/dashboard/resume/${resumeId}/analysis`)
+      // Start tailoring process
+      setIsTailoring(true)
+
+      try {
+        // Call the tailor endpoint
+        const response = await fetch(`/api/resumes/${resumeId}/tailor`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            jobTitle: jobTitle.trim(),
+            companyName: companyName.trim(),
+            jobDescription: jobDescription.trim(),
+          }),
+        })
+
+        const data = await response.json()
+
+        if (response.ok && data.success) {
+          // Show success message
+          toast.success('Resume tailored successfully!', {
+            description: `Optimized for ${jobTitle} at ${companyName}`,
+            duration: 3000
+          })
+
+          // Redirect back to the resume editor with the tailored content
+          setTimeout(() => {
+            router.push(`/dashboard/resume/${resumeId}`)
+          }, 500)
+        } else {
+          throw new Error(data.error || 'Failed to tailor resume')
+        }
+      } catch (error) {
+        console.error('Tailoring error:', error)
+        toast.error('Failed to tailor resume', {
+          description: 'Please try again or continue manually'
+        })
+        setIsTailoring(false)
+      }
     }
   }
 
@@ -239,6 +287,31 @@ export default function JobDescriptionPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      {/* Tailoring Loading Overlay */}
+      {isTailoring && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center">
+          <div className="text-center">
+            <div className="mb-6">
+              <Loader2 className="w-16 h-16 text-cyan-400 animate-spin mx-auto" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Tailoring your resume...
+            </h2>
+            <p className="text-slate-300 text-lg mb-1">
+              for {jobTitle} at {companyName}
+            </p>
+            <p className="text-slate-400 text-sm">
+              Using AI to optimize your experience for this specific role
+            </p>
+            <div className="mt-6 flex justify-center">
+              <div className="bg-slate-800/50 rounded-lg px-4 py-2">
+                <p className="text-xs text-slate-400">This may take 15-30 seconds</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Premium Background Effects */}
       {isMounted && (
         <>

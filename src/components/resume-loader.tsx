@@ -11,9 +11,9 @@ export default function ResumeLoader({
   subtitle = "Optimizing your experience...",
   fullScreen = true
 }: ResumeLoaderProps) {
-  const containerClass = fullScreen 
-    ? "fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center z-50"
-    : "min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center"
+  const containerClass = fullScreen
+    ? "fixed inset-0 bg-gradient-to-br from-slate-950 via-gray-900 to-black flex items-center justify-center z-50"
+    : "min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-black flex items-center justify-center"
   
   return (
     <div className={containerClass}>
@@ -22,7 +22,7 @@ export default function ResumeLoader({
         {[...Array(15)].map((_, i) => (
           <div
             key={i}
-            className="absolute w-1 h-1 bg-cyan-400/10 rounded-full animate-pulse"
+            className="absolute w-1 h-1 bg-white/10 rounded-full animate-pulse"
             style={{
               left: `${(i * 13 + 10) % 90 + 5}%`,
               top: `${(i * 17 + 15) % 80 + 10}%`,
@@ -49,7 +49,7 @@ export default function ResumeLoader({
               {[...Array(8)].map((_, i) => (
                 <div
                   key={i}
-                  className="h-2 bg-gradient-to-r from-cyan-400/20 to-purple-400/20 rounded"
+                  className="h-2 bg-gradient-to-r from-slate-400/20 to-slate-600/20 rounded"
                   style={{
                     animation: 'lineFill 2s ease-out forwards',
                     animationDelay: `${i * 0.3}s`,
@@ -62,7 +62,7 @@ export default function ResumeLoader({
           </div>
 
           {/* Floating Elements */}
-          <div className="absolute -top-4 -right-4 w-12 h-12 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-full animate-pulse flex items-center justify-center">
+          <div className="absolute -top-4 -right-4 w-12 h-12 bg-gradient-to-br from-slate-500 to-slate-700 rounded-full animate-pulse flex items-center justify-center">
             <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -71,7 +71,7 @@ export default function ResumeLoader({
           {/* AI Sparkles */}
           <div className="absolute -bottom-4 -left-4">
             <svg 
-              className="w-8 h-8 text-cyan-400" 
+              className="w-8 h-8 text-slate-400" 
               fill="currentColor" 
               viewBox="0 0 24 24"
               style={{
@@ -85,7 +85,7 @@ export default function ResumeLoader({
 
         {/* Loading Text */}
         <div className="mt-8 text-center">
-          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 animate-pulse">
+          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 animate-pulse">
             {title}
           </h2>
           <p className="text-slate-400 mt-2">{subtitle}</p>

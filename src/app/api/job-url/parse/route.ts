@@ -31,14 +31,51 @@ export async function POST(request: NextRequest) {
 
     console.log('🌐 Fetching job posting from:', validatedUrl.href);
 
+    // Check for sites that commonly block scraping
+    const blockedDomains = [
+      'indeed.com',
+      'linkedin.com',
+      'glassdoor.com',
+      'monster.com',
+      'ziprecruiter.com'
+    ];
+
+    const isBlockedSite = blockedDomains.some(domain =>
+      validatedUrl.hostname.includes(domain)
+    );
+
+    if (isBlockedSite) {
+      console.log('⚠️ Blocked site detected:', validatedUrl.hostname);
+      return NextResponse.json({
+        error: 'This site blocks automated access',
+        details: 'Please copy and paste the job description manually. Most job sites like Indeed, LinkedIn, and Glassdoor prevent automated data extraction for security reasons.',
+        success: false,
+        isBlockedSite: true
+      }, { status: 400 });
+    }
+
     // Fetch the webpage
     const response = await fetch(validatedUrl.href, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      },
+      redirect: 'follow'
     });
 
     if (!response.ok) {
+      // Check if it's a bot detection/blocking response
+      if (response.status === 403 || response.status === 429) {
+        return NextResponse.json({
+          error: 'This site blocks automated access',
+          details: 'Please copy and paste the job description manually. The website has detected automated access and blocked it.',
+          success: false,
+          isBlockedSite: true
+        }, { status: 400 });
+      }
       throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
     }
 

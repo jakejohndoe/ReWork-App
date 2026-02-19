@@ -30,7 +30,6 @@
 - App boots and all pages load ✅
 - Storage switched from AWS S3 to Supabase Storage ✅
 - Upload UX fixed (removed fake progress bar) ✅
-- AI prompt rewritten (484 lines → 82 lines, analysis → generation) ✅
 - Auto-fill from PDF with accurate AI parsing (no placeholders) ✅
 - Null byte sanitization for PostgreSQL compatibility ✅
 - Save button feedback added ✅
@@ -41,6 +40,9 @@
 - Professional badge positioning fixed in preview ✅
 - Job URL auto-fill feature (paste URL → extract job details) ✅
 - Smooth upload redirect with transition message ✅
+- **AI Resume Tailoring**: Complete flow from job description to tailored resume ✅
+- **Undo Tailoring**: Restore original resume with one click ✅
+- **Blocked Site Detection**: Graceful handling of Indeed/LinkedIn/Glassdoor ✅
 
 ## What's NOT Done Yet
 - Stripe integration for payments (FREE/PREMIUM plans exist in schema)
@@ -54,8 +56,96 @@
 - Rate limiting on API routes
 - Error boundaries
 - Resume versioning UI
+- Dark theme for auth pages (signin/signup)
+- Complete migration of all remaining purple-themed components
 
-## Latest Fixes (2/18/26)
+## Latest Updates (2/19/26)
+
+### CHUNK 9 - UI Refinement Complete ✅
+- **Landing Page as Design Reference**: Used landing page color palette throughout app
+- **Color Scheme Updates**:
+  - Background: `from-slate-950 via-gray-900 to-black` gradient
+  - Cards: `bg-slate-800/40` with `border-white/10`
+  - Text: `slate-200` primary, `slate-400` secondary, `slate-500` muted
+  - Accent: `emerald-400/500` for success states
+  - Removed all remaining purple/violet colors
+- **Navigation & Status Bar**:
+  - Updated to match landing page with `bg-slate-900/30` backdrop blur
+  - Proper slate color scheme for text and borders
+- **Dashboard Polish**:
+  - Resume cards now use landing page card styling
+  - Better hover states with `hover:border-white/30`
+  - Consistent spacing and padding
+- **Editor Improvements**:
+  - Added Auto-fill from PDF button prominently at top
+  - Right panel with Preview/Job toggle tabs
+  - Live resume preview on white card background
+  - Job panel styled with slate colors matching landing page
+  - Tailor button uses `emerald-500` accent color
+- **Form Components**:
+  - Inputs/textareas: `bg-slate-800/30` with proper hover/focus states
+  - Consistent border colors and transitions
+  - Removed emojis, using clean text labels
+- **Section Behavior**:
+  - Smooth expand/collapse with rotating chevron
+  - Proper transitions and overflow handling
+  - Emerald accent for completed sections
+- **API Fix**:
+  - Added PUT method to resume API route
+  - Fixed field mapping for compatibility
+- **Loading Screen**:
+  - Updated to use slate/gray colors instead of purple
+  - Matches overall app theme
+
+## Previous Updates (2/19/26)
+
+### CHUNK 8 - UI Polish Pass Complete ✅
+- **Enhanced Dark Theme**: Added craft and visual hierarchy back while maintaining dark aesthetic
+- **Global CSS Variables**: Enhanced with proper spacing, radius, and height variables
+- **Shared Navigation Component**: Built reusable nav with user menu and settings integration
+- **Status Bar Component**: Created bottom status bar for plan info and auto-save status
+- **Dashboard Polish**:
+  - Improved card styling with icons and hover states
+  - Better spacing and padding throughout
+  - Resume cards with proper visual hierarchy
+  - Smooth transitions and subtle animations
+- **Editor Split-Panel Layout**:
+  - Fixed navigation with back link and resume title
+  - Collapsible right panel for job description
+  - Edit/Preview toggle with smooth transitions
+  - Auto-save with debouncing and status indicators
+- **Form Components Styling**:
+  - Updated Input, Textarea, Button, Card components
+  - Consistent border radius (8px cards, 6px inputs/buttons)
+  - Hover states with border brightening
+  - Proper padding and transitions
+- **Landing Page Colors**:
+  - Replaced all purple/violet gradients with dark grays
+  - Kept all animations and effects
+  - Changed CTAs to white buttons with dark text
+  - Updated hero gradients to use subtle gray tones
+- **Typography Improvements**:
+  - System fonts with tight letter-spacing
+  - Proper size hierarchy (11px-20px scale)
+  - Font weights adjusted (600 for headings)
+
+## Previous Updates (2/18/26)
+
+### CHUNK 7 - UI Redesign Complete ✅
+- **Complete Dark Minimal Theme**: Implemented Linear-inspired dark design system
+- **New Color Palette**: Near-black background (#0A0A0B), subtle borders, clean whites
+- **Simplified Dashboard**: Removed stats cards, activity feed, verbose headers - now minimal
+- **Unified Editor**: Merged 3-step flow into single page with collapsible job panel
+- **Component Restyling**: Updated all UI components with dark theme
+- **Typography**: System fonts, tight letter-spacing, proper size hierarchy
+- **Layout Changes**:
+  - Clean top nav with minimal branding
+  - Single-page editor with slide-out job description panel
+  - Bottom status bar for plan info
+  - Edit/Preview toggle in header
+- **Removed**: Purple gradients, glows, animations, circuit backgrounds
+
+## Previous Fixes (2/18/26)
 
 ### Round 1 - Core Auto-fill & UI Fixes
 - **Auto-fill null byte error**: Fixed by sanitizing PDF text to remove \u0000 and control characters
@@ -73,8 +163,18 @@
 - **Upload redirect UX**: Reduced delay from 1.5s to 0.5s, added "Taking you to the editor..." toast message
 - **Section completion logic**: Identified issue (isComplete prop vs completionScore) - needs refactor to sync
 
+### Round 3 - Tailored Resume Generation (Complete Flow Rebuild)
+- **NEW /api/resumes/[id]/tailor endpoint**: Uses GPT-4o (not mini) with temperature 0.7 for natural language
+- **High-quality AI prompt**: Maintains factual accuracy, rewrites for specific role, preserves authentic voice
+- **Streamlined flow**: Job description → Tailoring loading screen → Back to editor with tailored content
+- **"Tailored for" banner**: Shows job/company, includes "Undo Tailoring" button
+- **Undo functionality**: Restores original pre-tailored content from originalContent field
+- **Indeed/LinkedIn blocker**: Detects blocked sites, shows graceful error message
+- **Loading overlay**: "Tailoring your resume for [Job] at [Company]" with 15-30 second estimate
+
 ## Known Issues to Investigate
-- PDF export may have issues (depends on old S3 references being fully cleaned up)
+- PDF export confirmed working with Supabase Storage ✅
+- TypeScript errors fixed (companyName → company field) ✅
 - 21 security vulnerabilities need addressing
 - Some files are 600+ lines and need refactoring
 - No tests exist
