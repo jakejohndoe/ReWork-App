@@ -9,9 +9,10 @@ import { SettingsModal } from "@/components/settings-modal"
 interface NavigationProps {
   className?: string
   showUserMenu?: boolean
+  children?: React.ReactNode
 }
 
-export default function Navigation({ className = "", showUserMenu = true }: NavigationProps) {
+export default function Navigation({ className = "", showUserMenu = true, children }: NavigationProps) {
   const { data: session } = useSession()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
@@ -32,6 +33,9 @@ export default function Navigation({ className = "", showUserMenu = true }: Navi
                 ReWork
               </span>
             </Link>
+
+            {/* Custom children content */}
+            {children}
 
             {/* Right Side Actions */}
             {showUserMenu && session && (

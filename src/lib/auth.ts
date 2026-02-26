@@ -15,6 +15,13 @@ export const authOptions: NextAuthOptions = {
     signIn: '/auth/signin',
   },
   callbacks: {
+    redirect: async ({ url, baseUrl }) => {
+      // Always redirect to dashboard after successful sign in
+      if (url.startsWith(baseUrl)) {
+        return `${baseUrl}/dashboard`
+      }
+      return url
+    },
     session: async ({ session, user }) => {
       if (session?.user && user) {
         session.user.id = user.id

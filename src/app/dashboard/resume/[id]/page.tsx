@@ -487,10 +487,11 @@ export default function UnifiedEditorPage() {
                   resumeId={resumeId}
                   onAutoFillComplete={(data) => {
                     if (data) {
+                      // Map API response structure to frontend structure
                       setResumeData({
-                        contactInfo: data.contactInfo || { firstName: '', lastName: '', email: '', phone: '', location: '' },
-                        professionalSummary: data.professionalSummary || undefined,
-                        workExperience: data.workExperience || [],
+                        contactInfo: data.contact || { firstName: '', lastName: '', email: '', phone: '', location: '' },
+                        professionalSummary: data.summary || undefined,
+                        workExperience: data.experience || [],
                         education: data.education || [],
                         skills: data.skills || { technical: [], frameworks: [], tools: [], cloud: [], databases: [], soft: [], certifications: [] },
                         projects: data.projects || [],

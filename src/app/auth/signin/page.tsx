@@ -56,7 +56,7 @@ function SignInContent() {
               <div className="space-y-3">
                 {providers.google && (
                   <Button
-                    onClick={() => signIn('google', { callbackUrl: '/' })}
+                    onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
                     className="w-full bg-white text-black hover:bg-white/90 border-0 h-12 font-medium text-base transition-all hover:shadow-lg hover:shadow-white/20"
                     size="lg"
                   >

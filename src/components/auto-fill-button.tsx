@@ -101,7 +101,12 @@ export default function AutoFillButton({
 
       // Call the callback with the extracted data
       if (onAutoFillComplete && result.data) {
-        onAutoFillComplete(result.data);
+        try {
+          onAutoFillComplete(result.data);
+        } catch (callbackError) {
+          console.error('Error in auto-fill callback:', callbackError);
+          toast.error('Auto-fill completed but failed to update form. Please reload the page.');
+        }
       }
 
       // Additional success details

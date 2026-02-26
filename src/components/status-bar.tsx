@@ -68,7 +68,7 @@ export default function StatusBar({ resumeCount, autoSaveStatus, className = "" 
           {/* Right Side - Upgrade Link */}
           {!isPremium && !autoSaveStatus && (
             <Link
-              href="/pricing"
+              href="/#pricing"
               className="flex items-center gap-1.5 text-[12px] text-indigo-400 hover:text-indigo-300 transition-colors"
             >
               <Zap className="w-3.5 h-3.5" />

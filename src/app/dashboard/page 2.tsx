@@ -374,7 +374,7 @@ export default function DashboardPage() {
             {isPremium ? "Pro Plan" : "Free Plan"} • {resumeCount}/{resumeLimit} resumes used
           </div>
           {!isPremium && (
-            <Link href="/#pricing" className="text-sm text-purple-400 hover:text-purple-300 transition-colors">
+            <Link href="/pricing" className="text-sm text-purple-400 hover:text-purple-300 transition-colors">
               Upgrade to Pro — unlimited resumes
             </Link>
           )}
