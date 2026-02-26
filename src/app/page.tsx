@@ -3,35 +3,26 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { useSession, signIn, signOut } from "next-auth/react"
 import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
-import confetti from "canvas-confetti"
-import { 
- 
-  FileText, 
+import {
+  FileText,
   Download,
-  Sparkles,
   Target,
   Clock,
   ArrowRight,
   CheckCircle,
   Upload,
-  Zap
+  Zap,
+  Sparkles
 } from "lucide-react"
-import { Logo, BetaBadge } from "@/components/ui/logo"
-import { formatMemberSince, formatLastActive } from "@/lib/date-utils"
+import { Logo } from "@/components/ui/logo"
 
 export default function HomePage() {
-  const { data: session, status } = useSession()
-  const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 }) // Default center position
+  const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 })
   const [isLoaded, setIsLoaded] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
-  const [showSparkles, setShowSparkles] = useState(false)
-  const [showWelcomeBadge, setShowWelcomeBadge] = useState(false)
   const heroRef = useRef<HTMLDivElement>(null)
-  const ctaRef = useRef<HTMLButtonElement>(null)
-  const welcomeCardRef = useRef<HTMLDivElement>(null)
 
   // Client-side mount check
   useEffect(() => {
@@ -41,7 +32,7 @@ export default function HomePage() {
   // Mouse tracking for interactive effects (only after mount)
   useEffect(() => {
     if (!isMounted) return
-    
+
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX / window.innerWidth * 100, y: e.clientY / window.innerHeight * 100 })
     }
@@ -55,117 +46,19 @@ export default function HomePage() {
     setTimeout(() => setIsLoaded(true), 100)
   }, [isMounted])
 
-  // Sign-in celebration effect
-  useEffect(() => {
-    if (!session || status !== "authenticated" || !isMounted) return
-
-    // Check if this is a fresh sign-in
-    const hasShownCelebration = localStorage.getItem('sign-in-celebrated')
-    const currentTime = Date.now()
-    const celebrationTime = localStorage.getItem('sign-in-celebration-time')
-    
-    // Show celebration if never shown or it's been more than 1 hour
-    const shouldShowCelebration = !hasShownCelebration || 
-      !celebrationTime || 
-      (currentTime - parseInt(celebrationTime)) > 3600000 // 1 hour
-
-    if (shouldShowCelebration) {
-      // Delay to ensure UI is loaded
-      setTimeout(() => {
-        triggerSignInCelebration()
-        localStorage.setItem('sign-in-celebrated', 'true')
-        localStorage.setItem('sign-in-celebration-time', currentTime.toString())
-      }, 1000)
-    }
-  }, [session, status, isMounted])
-
-  const triggerSignInCelebration = () => {
-    // 1. Gentle Welcome Glow Effect
-    // Create a subtle glow that emanates from the welcome area
-    const welcomeElement = document.querySelector('.welcome-glow-target')
-    if (welcomeElement) {
-      welcomeElement.classList.add('welcome-glow-active')
-      setTimeout(() => {
-        welcomeElement.classList.remove('welcome-glow-active')
-      }, 3000)
-    }
-
-    // 2. Gentle Floating Sparkles
-    // Create subtle sparkles around the welcome area
-    for (let i = 0; i < 8; i++) {
-      setTimeout(() => {
-        createFloatingSparkle()
-      }, i * 200)
-    }
-
-    // 3. Welcome Badge Animation
-    setTimeout(() => {
-      setShowWelcomeBadge(true)
-      // Hide badge after 4 seconds
-      setTimeout(() => setShowWelcomeBadge(false), 4000)
-    }, 500)
-
-    // 4. Enhanced Sparkle Animation on Welcome Card
-    setTimeout(() => {
-      setShowSparkles(true)
-      // Turn off sparkles after 8 seconds (reduced from 10)
-      setTimeout(() => setShowSparkles(false), 8000)
-    }, 1000)
-  }
-
-  // Create gentle floating sparkles
-  const createFloatingSparkle = () => {
-    const sparkle = document.createElement('div')
-    sparkle.className = 'floating-sparkle'
-    sparkle.innerHTML = '✨'
-    
-    // Random position around the viewport center
-    const x = Math.random() * window.innerWidth
-    const y = window.innerHeight * 0.3 + Math.random() * window.innerHeight * 0.4
-    
-    sparkle.style.cssText = `
-      position: fixed;
-      left: ${x}px;
-      top: ${y}px;
-      font-size: 16px;
-      z-index: 1000;
-      pointer-events: none;
-      animation: floatSparkle 3s ease-out forwards;
-      color: #e5e5e5;
-      text-shadow: 0 0 10px rgba(229, 229, 229, 0.4);
-    `
-    
-    document.body.appendChild(sparkle)
-    
-    // Remove sparkle after animation
-    setTimeout(() => {
-      if (sparkle.parentNode) {
-        sparkle.parentNode.removeChild(sparkle)
-      }
-    }, 3000)
-  }
-
   // Magnetic button effect
   const handleCtaMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!ctaRef.current) return
-    const rect = ctaRef.current.getBoundingClientRect()
+    const button = e.currentTarget
+    const rect = button.getBoundingClientRect()
     const x = e.clientX - rect.left - rect.width / 2
     const y = e.clientY - rect.top - rect.height / 2
-    const distance = Math.sqrt(x * x + y * y)
-    const maxDistance = 100
-    
-    if (distance < maxDistance) {
-      const force = (maxDistance - distance) / maxDistance
-      const moveX = (x / distance) * force * 8
-      const moveY = (y / distance) * force * 8
-      ctaRef.current.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.05)`
-    }
+
+    button.style.transform = `translate(${x * 0.1}px, ${y * 0.1}px) scale(1.05)`
   }
 
-  const handleCtaMouseLeave = () => {
-    if (ctaRef.current) {
-      ctaRef.current.style.transform = 'translate(0px, 0px) scale(1)'
-    }
+  const handleCtaMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const button = e.currentTarget
+    button.style.transform = 'translate(0, 0) scale(1)'
   }
 
   return (
@@ -173,40 +66,39 @@ export default function HomePage() {
       {/* Floating Particles Background - Only render on client */}
       {isMounted && (
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-white/20 rounded-full animate-pulse"
-              style={{
-                left: `${(i * 13 + 10) % 90 + 5}%`, // Deterministic positioning
-                top: `${(i * 17 + 15) % 80 + 10}%`, // Deterministic positioning
-                animationDelay: `${(i * 0.3) % 3}s`,
-                animationDuration: `${3 + (i % 3)}s`
-              }}
-            />
-          ))}
+          {[...Array(30)].map((_, i) => {
+            const animations = ['float-up-slow', 'float-diagonal', 'float-side', 'float-wobble'];
+            const sizes = ['w-1 h-1', 'w-1.5 h-1.5', 'w-2 h-2', 'w-0.5 h-0.5'];
+            const animation = animations[i % animations.length];
+            const size = sizes[i % sizes.length];
+
+            return (
+              <div
+                key={i}
+                className={`absolute ${size} bg-white/30 rounded-full`}
+                style={{
+                  left: `${(i * 13 + 10) % 90 + 5}%`,
+                  top: `${(i * 17 + 15) % 80 + 10}%`,
+                  animation: `${animation} ${8 + (i % 5) * 2}s ease-in-out infinite`,
+                  animationDelay: `${(i * 0.5) % 5}s`
+                }}
+              />
+            );
+          })}
         </div>
       )}
 
       {/* Dynamic Gradient Mesh Background - Only render on client */}
       {isMounted && (
-        <div 
-          className="absolute inset-0 opacity-30 transition-all duration-1000"
+        <div
+          className="absolute inset-0 opacity-30 pointer-events-none"
           style={{
-            backgroundImage: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(100, 100, 120, 0.2) 0%, transparent 70%)`
+            background: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)`
           }}
         />
       )}
 
-      {/* Noise Texture Overlay */}
-      <div 
-        className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
-        }}
-      />
-
-      <div className="circuit-bg min-h-screen relative z-10">
+      <div className="relative z-10">
         {/* Enhanced Header with Glassmorphism */}
         <header className="border-b border-white/10 backdrop-blur-xl bg-slate-900/30 sticky top-0 z-50">
           <div className="container mx-auto px-4 py-4">
@@ -214,59 +106,45 @@ export default function HomePage() {
               <Link href="/" className="flex items-center space-x-2 group">
                 <Logo size="xs" variant="simple" showBadge={false} className="group-hover:scale-110 transition-all duration-300" />
                 <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 group-hover:scale-105 transition-transform duration-300">ReWork</span>
-                <BetaBadge size="xs" className="group-hover:scale-105 transition-transform duration-300" />
               </Link>
+
+              {/* Navigation Links */}
+              <nav className="hidden md:flex items-center space-x-6">
+                <a
+                  href="#pricing"
+                  className="text-gray-300 hover:text-white transition-colors duration-200 font-medium"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  Pricing
+                </a>
+              </nav>
+
               <div className="flex items-center space-x-4">
-                {status === "loading" ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span className="text-slate-400">Loading...</span>
-                  </div>
-                ) : session ? (
-                  <div className="flex items-center space-x-3">
-                    <div className="text-right hover:scale-105 transition-transform duration-200 group">
-                      <div className="text-sm text-white group-hover:text-gray-300 transition-colors">
-                        {session.user?.name || session.user?.email || 'User'}
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        {session.user?.plan === 'PREMIUM' ? 'Premium' : 'Free'} Plan
-                      </div>
-                    </div>
-                    <Link href="/dashboard">
-                      <Button className="bg-white text-black hover:bg-white/95 border-0 hover:scale-105 hover:shadow-lg hover:shadow-white/25 transition-all duration-300 font-semibold">Dashboard</Button>
-                    </Link>
-                    <Button 
-                      onClick={() => signOut()} 
-                      variant="ghost" 
-                      className="text-white hover:bg-white/10 hover:scale-105 transition-all duration-200"
-                    >
-                      Sign Out
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-4">
-                    <Button 
-                      onClick={() => signIn()} 
-                      variant="ghost" 
-                      className="text-white hover:bg-white/10 hover:scale-105 transition-all duration-200"
-                    >
-                      Login
-                    </Button>
-                    <Button 
-                      onClick={() => signIn()} 
-                      className="bg-white text-black hover:bg-white/95 border-0 hover:scale-105 hover:shadow-lg hover:shadow-white/25 transition-all duration-300 font-semibold"
-                    >
-                      Get Started
-                    </Button>
-                  </div>
-                )}
+                <Link href="/auth/signin">
+                  <Button
+                    variant="ghost"
+                    className="text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-200"
+                  >
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/auth/signin">
+                  <Button
+                    className="bg-white text-black hover:bg-white/95 border-0 hover:scale-105 hover:shadow-lg hover:shadow-white/25 transition-all duration-300 font-semibold"
+                  >
+                    Get Started
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="container mx-auto px-4 py-16">
+        {/* Main Hero and Content */}
+        <main className="container mx-auto px-4 py-24">
           {/* Revolutionary Hero Section */}
           <div ref={heroRef} className="text-center mb-20 relative">
             {/* Ultra-Premium AI Badge */}
@@ -275,21 +153,21 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-gray-400/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
                 <span className="relative z-10 flex items-center gap-2 font-medium">
                   <span className="text-white animate-pulse">✦</span>
-                  AI-Powered Optimization
+                  3 Free Resumes • No Credit Card Required
                   <span className="text-gray-300 animate-bounce text-xs">●</span>
                 </span>
               </Badge>
             </div>
-            
+
             {/* Revolutionary Animated Title */}
-            <h1 className="text-6xl md:text-8xl font-bold mb-10 leading-[0.9] tracking-tight relative">
-              <div 
+            <h1 className="text-6xl md:text-8xl font-bold mb-10 leading-tight tracking-tight relative overflow-visible">
+              <div
                 className={`transition-all duration-1000 delay-200 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               >
-                <span 
+                <span
                   className="hover:scale-105 transition-transform duration-300 inline-block"
                   style={isMounted ? {
-                    backgroundImage: `linear-gradient(45deg, 
+                    backgroundImage: `linear-gradient(45deg,
                       hsl(0, 0%, ${75 + mousePosition.x * 0.1}%) 0%,
                       hsl(0, 0%, ${80 + mousePosition.y * 0.05}%) 25%,
                       hsl(0, 0%, ${85 + mousePosition.x * 0.05}%) 50%,
@@ -305,14 +183,14 @@ export default function HomePage() {
                     backgroundClip: 'text'
                   }}
                 >
-                  smart tech,
+                  Smart Tech,
                 </span>
                 <br />
                 <span className="text-slate-300 hover:text-slate-100 hover:scale-105 transition-all duration-300 inline-block mr-3">for</span>
-                <span 
+                <span
                   className="hover:scale-105 transition-transform duration-300 inline-block"
                   style={isMounted ? {
-                    backgroundImage: `linear-gradient(45deg, 
+                    backgroundImage: `linear-gradient(45deg,
                       hsl(0, 0%, ${70 + mousePosition.x * 0.1}%) 0%,
                       hsl(0, 0%, ${75 + mousePosition.y * 0.08}%) 50%,
                       hsl(0, 0%, ${70 + mousePosition.x * 0.05}%) 100%)`,
@@ -326,271 +204,125 @@ export default function HomePage() {
                     backgroundClip: 'text'
                   }}
                 >
-                  smarter jobs
+                  Smarter Jobs
                 </span>
               </div>
             </h1>
-            
+
             {/* Enhanced Description with Staggered Animation */}
             <div className="max-w-3xl mx-auto mb-14">
               <p className={`text-xl md:text-2xl text-slate-200 mb-4 font-medium hover:text-white transition-all duration-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '400ms' }}>
-                transform your resume in seconds with revolutionary optimization.
+                Transform Your Resume in Seconds with Revolutionary Optimization.
               </p>
               <p className={`text-lg text-slate-300 leading-relaxed hover:text-slate-200 transition-all duration-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '600ms' }}>
-                upload • optimize • dominate
+                Upload • Optimize • Dominate
               </p>
             </div>
-            
+
             {/* Magnetic CTA Button */}
             <div className={`flex flex-col sm:flex-row gap-6 justify-center items-center mb-8 transition-all duration-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '800ms' }}>
-              {session ? (
-                <Link href="/dashboard">
-                  <button
-                    ref={ctaRef}
-                    onMouseMove={handleCtaMouseMove}
-                    onMouseLeave={handleCtaMouseLeave}
-                    className="relative px-8 py-4 text-lg font-semibold text-black bg-white rounded-lg overflow-hidden group transition-all duration-300 hover:shadow-xl hover:shadow-white/25 hover:scale-105"
-                  >
-                    <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                    <div className="relative z-10 flex items-center gap-2">
-                      Create Resume
-                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-                    </div>
-                    <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"></div>
-                  </button>
-                </Link>
-              ) : (
+              <Link href="/auth/signin">
                 <button
-                  ref={ctaRef}
                   onMouseMove={handleCtaMouseMove}
                   onMouseLeave={handleCtaMouseLeave}
-                  onClick={() => signIn()}
                   className="relative px-8 py-4 text-lg font-semibold text-black bg-white rounded-lg overflow-hidden group transition-all duration-300 hover:shadow-xl hover:shadow-white/25 hover:scale-105"
                 >
                   <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
                   <div className="relative z-10 flex items-center gap-2">
-                    Start Free Trial
+                    Get Started Free
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                   </div>
                   <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"></div>
                 </button>
-              )}
+              </Link>
             </div>
-            
-            {/* Enhanced Trust Indicator */}
-            <p className={`text-sm text-slate-400 font-medium hover:text-slate-300 transition-all duration-500 cursor-default ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '1000ms' }}>
-              🔒 No credit card required • 3 free resumes • Cancel anytime
-            </p>
-          </div>
 
-          {/* Welcome Back Card for Signed-In Users */}
-          {session && (
-            <div className="mb-16">
-              <Card ref={welcomeCardRef} className="welcome-glow-target bg-gradient-to-br from-gray-800/50 via-gray-900/20 to-black/30 backdrop-blur-lg border border-white/20 hover:border-white/30 transition-all duration-500 hover:scale-[1.02] relative overflow-hidden group max-w-4xl mx-auto">
-                {/* Animated Background */}
-                <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-gray-500/5 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-white via-gray-400 to-white"></div>
-                
-                {/* Sparkle Animation */}
-                {showSparkles && (
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                    {[...Array(12)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="absolute animate-ping"
-                        style={{
-                          left: `${15 + (i * 7) % 70}%`,
-                          top: `${10 + (i * 11) % 80}%`,
-                          animationDelay: `${i * 0.3}s`,
-                          animationDuration: '2s'
-                        }}
-                      >
-                        <Sparkles className="w-4 h-4 text-white opacity-70" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                <CardHeader className="text-center relative z-10 pb-6">
-                  {/* Animated Welcome Badge */}
-                  {showWelcomeBadge && (
-                    <div className="absolute top-4 right-4 z-20 animate-in slide-in-from-right-5 fade-in duration-500">
-                      <Badge className="bg-gradient-to-r from-green-500/90 to-emerald-600/90 text-white border-0 px-4 py-2 animate-pulse backdrop-blur-sm">
-                        ✨ Successfully signed in!
-                      </Badge>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-center gap-3 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-white to-gray-400 rounded-full flex items-center justify-center animate-pulse">
-                      <CheckCircle className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-2xl md:text-3xl text-white mb-1">
-                        Welcome back, {session.user?.name?.split(' ')[0] || 'there'}! 👋
-                      </CardTitle>
-                      <CardDescription className="text-slate-300 text-lg">
-                        Ready to create your next optimized resume?
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="relative z-10">
-                  <div className="grid md:grid-cols-3 gap-6 mb-8">
-                    {/* Quick Action Cards */}
-                    <div className="group/action">
-                      <div className="bg-slate-800/30 rounded-xl p-6 border border-white/10 hover:border-gray-400/40 transition-all duration-300 hover:scale-105">
-                        <div className="text-center">
-                          <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-700 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover/action:scale-110 transition-transform duration-300">
-                            <Upload className="w-6 h-6 text-white" />
-                          </div>
-                          <h3 className="text-white font-semibold mb-1 group-hover/action:text-gray-300 transition-colors">Create Resume</h3>
-                          <p className="text-slate-400 text-sm group-hover/action:text-slate-300 transition-colors">Upload & Optimize</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="group/action">
-                      <div className="bg-slate-800/30 rounded-xl p-6 border border-white/10 hover:border-gray-400/40 transition-all duration-300 hover:scale-105">
-                        <div className="text-center">
-                          <div className="w-12 h-12 bg-gradient-to-br from-white to-gray-400 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover/action:scale-110 transition-transform duration-300">
-                            <Zap className="w-6 h-6 text-black" />
-                          </div>
-                          <h3 className="text-white font-semibold mb-1 group-hover/action:text-gray-300 transition-colors">AI Optimize</h3>
-                          <p className="text-slate-400 text-sm group-hover/action:text-slate-300 transition-colors">Smart Enhancement</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="group/action">
-                      <div className="bg-slate-800/30 rounded-xl p-6 border border-white/10 hover:border-green-400/40 transition-all duration-300 hover:scale-105">
-                        <div className="text-center">
-                          <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-800 rounded-lg mx-auto mb-3 flex items-center justify-center group-hover/action:scale-110 transition-transform duration-300">
-                            <FileText className="w-6 h-6 text-white" />
-                          </div>
-                          <h3 className="text-white font-semibold mb-1 group-hover/action:text-green-300 transition-colors">Browse Templates</h3>
-                          <p className="text-slate-400 text-sm group-hover/action:text-slate-300 transition-colors">Professional Designs</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Button */}
-                  <div className="text-center">
-                    <Link href="/dashboard">
-                      <Button className="bg-white text-black hover:bg-white/95 border-0 hover:scale-105 hover:shadow-lg hover:shadow-white/25 transition-all duration-300 px-8 py-3 text-lg font-semibold group">
-                        Go to Dashboard
-                        <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Enhanced Quick Stats for Logged-in Users */}
-          {session && (
-            <div className="mb-24">
-              <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-                {/* Member Since */}
-                <Card className="bg-slate-800/30 backdrop-blur-sm border-blue-400/20 hover:border-blue-400/40 transition-all duration-500 hover:scale-105 group relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <CardContent className="pt-6 relative z-10">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-400 mb-2 group-hover:scale-110 transition-transform duration-300">
-                        {formatMemberSince(new Date(session.user.createdAt))}
-                      </div>
-                      <div className="text-sm text-slate-300 group-hover:text-white transition-colors duration-300">
-                        account created
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Last Active */}
-                <Card className="bg-slate-800/30 backdrop-blur-sm border-green-400/20 hover:border-green-400/40 transition-all duration-500 hover:scale-105 group relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <CardContent className="pt-6 relative z-10">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-400 mb-2 group-hover:scale-110 transition-transform duration-300">
-                        {formatLastActive(new Date(session.user.lastActiveAt))}
-                      </div>
-                      <div className="text-sm text-slate-300 group-hover:text-white transition-colors duration-300">
-                        last activity
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Resumes Optimized */}
-                <Card className="bg-slate-800/30 backdrop-blur-sm border-gray-400/20 hover:border-gray-400/40 transition-all duration-500 hover:scale-105 group relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <CardContent className="pt-6 relative z-10">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-gray-400 mb-2 group-hover:scale-110 transition-transform duration-300">
-                        {session.user?.resumesOptimized || 0}
-                      </div>
-                      <div className="text-sm text-slate-300 group-hover:text-white transition-colors duration-300">
-                        resumes optimized
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
-
-          {/* 3D Tilt Feature Cards */}
-          <div className="grid md:grid-cols-3 gap-8 mb-24">
-            {[
-              { icon: Sparkles, title: "AI Optimization", desc: "Smart keyword matching and content optimization tailored to any job description", color: "from-gray-400 to-gray-600", hoverColor: "primary" },
-              { icon: FileText, title: "Professional Templates", desc: "ATS-friendly templates with real-time color customization and perfect formatting", color: "from-teal-400 to-blue-500", hoverColor: "secondary" },
-              { icon: Download, title: "Instant Export", desc: "Download polished, job-specific PDFs ready for immediate application", color: "from-green-400 to-teal-500", hoverColor: "green" }
-            ].map((feature, index) => (
-              <Card 
-                key={index}
-                className="bg-slate-800/40 backdrop-blur-sm border-white/10 hover:border-white/30 transition-all duration-500 hover:scale-105 group relative overflow-hidden"
+            {/* Floating Particles Animation */}
+            {isMounted && [...Array(3)].map((_, i) => (
+              <div
+                key={`hero-particle-${i}`}
+                className="absolute w-64 h-64 opacity-10 rounded-full blur-3xl"
                 style={{
-                  transform: 'perspective(1000px)',
-                  transition: 'all 0.3s ease-out'
+                  background: `radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)`,
+                  left: `${20 + i * 30}%`,
+                  top: `${-10 + i * 20}%`,
+                  animation: `floatGradient ${20 + i * 5}s ease-in-out infinite`,
+                  animationDelay: `${i * 2}s`
                 }}
-                onMouseMove={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect()
-                  const x = e.clientX - rect.left
-                  const y = e.clientY - rect.top
-                  const centerX = rect.width / 2
-                  const centerY = rect.height / 2
-                  const rotateX = (y - centerY) / centerY * -10
-                  const rotateY = (x - centerX) / centerX * 10
-                  e.currentTarget.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)'
-                }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-gray-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <CardHeader className="text-center relative z-10">
-                  <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl mb-6 mx-auto animate-float flex items-center justify-center group-hover:scale-110 transition-transform duration-300`} style={{ animationDelay: `${index}s` }}>
-                    <feature.icon className="w-8 h-8 text-white group-hover:animate-pulse" />
-                  </div>
-                  <CardTitle className={`text-white text-xl mb-3 group-hover:text-${feature.hoverColor}-300 transition-colors duration-300`}>{feature.title}</CardTitle>
-                  <CardDescription className="text-slate-300 text-base leading-relaxed group-hover:text-slate-200 transition-colors duration-300">
-                    {feature.desc}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+              />
             ))}
           </div>
 
-          {/* Enhanced Social Proof / Value Props */}
-          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            <Card className="bg-slate-800/40 backdrop-blur-sm border-primary-400/20 hover:border-primary-400/40 transition-all duration-500 hover:scale-105 group relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          {/* Why It Works - 3 Premium Feature Cards */}
+          <div className="grid md:grid-cols-3 gap-8 mb-24">
+            <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-800 hover:border-gray-700 hover:shadow-2xl hover:shadow-white/5 transition-all duration-500 hover:scale-[1.02] group relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <CardHeader className="relative z-10">
-                <CardTitle className="text-primary-400 flex items-center gap-3 text-xl group-hover:text-primary-300 transition-colors duration-300">
-                  <Target className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
+                <Target className="w-12 h-12 text-blue-400 mb-4 group-hover:scale-110 transition-transform duration-300" />
+                <CardTitle className="text-xl text-white group-hover:text-blue-300 transition-colors duration-300">AI-Powered Matching</CardTitle>
+              </CardHeader>
+              <CardContent className="relative z-10">
+                <p className="text-slate-300 group-hover:text-slate-200 transition-colors duration-300">
+                  Advanced AI analyzes job descriptions and optimizes your resume for maximum ATS compatibility and keyword matching.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-800 hover:border-gray-700 hover:shadow-2xl hover:shadow-white/5 transition-all duration-500 hover:scale-[1.02] group relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <CardHeader className="relative z-10">
+                <Clock className="w-12 h-12 text-green-400 mb-4 group-hover:scale-110 transition-transform duration-300" />
+                <CardTitle className="text-xl text-white group-hover:text-green-300 transition-colors duration-300">Instant Results</CardTitle>
+              </CardHeader>
+              <CardContent className="relative z-10">
+                <p className="text-slate-300 group-hover:text-slate-200 transition-colors duration-300">
+                  Transform your resume in seconds, not hours. Get professional results with just a few clicks.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-800 hover:border-gray-700 hover:shadow-2xl hover:shadow-white/5 transition-all duration-500 hover:scale-[1.02] group relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <CardHeader className="relative z-10">
+                <Zap className="w-12 h-12 text-purple-400 mb-4 group-hover:scale-110 transition-transform duration-300" />
+                <CardTitle className="text-xl text-white group-hover:text-purple-300 transition-colors duration-300">Stand Out</CardTitle>
+              </CardHeader>
+              <CardContent className="relative z-10">
+                <p className="text-slate-300 group-hover:text-slate-200 transition-colors duration-300">
+                  Professional templates and smart formatting ensure your resume looks exceptional and passes ATS filters.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* How It Works Section */}
+          <div className="mb-24">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-white">
+              Three Steps to Your Perfect Resume
+            </h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                { icon: Upload, title: "Upload", description: "Drop your existing resume or start from scratch" },
+                { icon: Sparkles, title: "Optimize", description: "AI enhances content and matches job requirements" },
+                { icon: Download, title: "Download", description: "Get your polished, ATS-ready resume instantly" }
+              ].map((step, index) => (
+                <div key={index} className="text-center group hover:scale-105 transition-all duration-300">
+                  <div className="mx-auto w-20 h-20 bg-gradient-to-br from-gray-800 to-gray-900 rounded-full flex items-center justify-center mb-4 border border-gray-700 group-hover:border-gray-600 group-hover:shadow-lg group-hover:shadow-white/10 transition-all duration-300">
+                    <step.icon className="w-10 h-10 text-white group-hover:scale-110 transition-transform duration-300" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2 text-white group-hover:text-blue-300 transition-colors duration-300">{step.title}</h3>
+                  <p className="text-slate-400 group-hover:text-slate-300 transition-colors duration-300">{step.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Ultra-Modern Feature Grid */}
+          <div className="grid md:grid-cols-2 gap-8 mb-24">
+            <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-800 hover:border-gray-700 transition-all duration-300 hover:shadow-xl hover:shadow-white/5 hover:scale-[1.02] relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-transparent pointer-events-none"></div>
+              <CardHeader className="relative z-10">
+                <CardTitle className="text-2xl text-white mb-2">
                   Why ReWork Works
                 </CardTitle>
               </CardHeader>
@@ -604,7 +336,7 @@ export default function HomePage() {
                     "Perfect preview-to-PDF consistency every time"
                   ].map((feature, index) => (
                     <div key={index} className="flex items-start gap-3 hover:bg-slate-800/30 p-3 rounded-lg transition-all duration-300 hover:scale-[1.02] group/item">
-                      <div className="w-2 h-2 bg-primary-400 rounded-full mt-3 flex-shrink-0 group-hover/item:animate-pulse"></div>
+                      <CheckCircle className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0 group-hover/item:text-emerald-400 transition-colors" />
                       <span className="group-hover/item:text-slate-200 transition-colors duration-300">{feature}</span>
                     </div>
                   ))}
@@ -612,42 +344,154 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800/40 backdrop-blur-sm border-secondary-400/20 hover:border-secondary-400/40 transition-all duration-500 hover:scale-105 group relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-800 hover:border-gray-700 transition-all duration-300 hover:shadow-xl hover:shadow-white/5 hover:scale-[1.02] relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-transparent pointer-events-none"></div>
               <CardHeader className="relative z-10">
-                <CardTitle className="text-secondary-400 flex items-center gap-3 text-xl group-hover:text-secondary-300 transition-colors duration-300">
-                  <Clock className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
-                  Get Started Today
+                <CardTitle className="text-2xl text-white mb-2">
+                  Perfect For
                 </CardTitle>
               </CardHeader>
               <CardContent className="relative z-10">
-                <div className="space-y-4 text-base text-slate-300">
-                  {[
-                    { text: "Upload your current resume", time: "1 minute", color: "green" },
-                    { text: "AI analyzes and optimizes content", time: "2-3 minutes", color: "blue" },
-                    { text: "Customize colors and template", time: "2 minutes", color: "gray" },
-                    { text: "Download professional PDF", time: "instant", color: "teal" }
-                  ].map((step, index) => (
-                    <div key={index} className="flex justify-between items-center hover:bg-slate-800/30 p-3 rounded-lg transition-all duration-300 hover:scale-[1.02] group/item">
-                      <span className="group-hover/item:text-slate-200 transition-colors duration-300">✅ {step.text}</span>
-                      <Badge variant="secondary" className={`bg-${step.color}-400/20 text-${step.color}-300 text-sm px-3 py-1 hover:bg-${step.color}-400/30 transition-colors duration-300`}>{step.time}</Badge>
+                <div className="space-y-6">
+                  <div className="group/item hover:bg-slate-800/30 p-4 rounded-lg transition-all duration-300">
+                    <div className="flex items-center gap-3 mb-2">
+                      <FileText className="w-5 h-5 text-blue-400" />
+                      <span className="font-semibold text-white group-hover/item:text-blue-300 transition-colors">Job Seekers</span>
                     </div>
-                  ))}
-                  <div className="pt-4 border-t border-white/10">
-                    {!session && (
-                      <Button 
-                        onClick={() => signIn()} 
-                        className="w-full bg-white text-black hover:bg-white/95 border-0 group hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-white/25 font-semibold"
-                        size="sm"
-                      >
-                        Start Your Free Trial
-                        <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-                      </Button>
-                    )}
+                    <p className="text-slate-400 text-sm group-hover/item:text-slate-300 transition-colors">Stand out from hundreds of applicants with optimized resumes</p>
+                  </div>
+                  <div className="group/item hover:bg-slate-800/30 p-4 rounded-lg transition-all duration-300">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Zap className="w-5 h-5 text-purple-400" />
+                      <span className="font-semibold text-white group-hover/item:text-purple-300 transition-colors">Career Changers</span>
+                    </div>
+                    <p className="text-slate-400 text-sm group-hover/item:text-slate-300 transition-colors">Highlight transferable skills and pivot your experience effectively</p>
+                  </div>
+                  <div className="group/item hover:bg-slate-800/30 p-4 rounded-lg transition-all duration-300">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Target className="w-5 h-5 text-green-400" />
+                      <span className="font-semibold text-white group-hover/item:text-green-300 transition-colors">Professionals</span>
+                    </div>
+                    <p className="text-slate-400 text-sm group-hover/item:text-slate-300 transition-colors">Keep your resume updated and optimized for new opportunities</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Pricing Section */}
+          <div id="pricing" className="mt-32 mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 text-white">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-lg text-slate-400 text-center mb-12 max-w-2xl mx-auto">
+              Start free and upgrade when you're ready. No hidden fees, no surprises.
+            </p>
+            <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+              {/* Free Tier */}
+              <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-800 hover:border-gray-700 transition-all duration-300 hover:shadow-xl hover:shadow-white/5 hover:scale-[1.02] relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-800/20 to-transparent pointer-events-none"></div>
+                <CardHeader className="relative z-10">
+                  <CardTitle className="text-2xl text-white mb-2">Free</CardTitle>
+                  <div className="text-3xl font-bold text-white">$0<span className="text-lg font-normal text-gray-400">/month</span></div>
+                </CardHeader>
+                <CardContent className="relative z-10 space-y-4">
+                  <div className="space-y-3">
+                    {[
+                      "3 resume optimizations",
+                      "AI-powered improvements",
+                      "Basic templates",
+                      "PDF export",
+                      "ATS compatibility check"
+                    ].map((feature, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                        <span className="text-gray-300">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Link href="/auth/signin" className="block">
+                    <Button className="w-full bg-white/10 text-white hover:bg-white/20 border border-gray-700 hover:border-gray-600">
+                      Get Started Free
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              {/* Pro Tier */}
+              <Card className="bg-gradient-to-br from-gray-900 to-gray-800 backdrop-blur-xl border-emerald-800/50 hover:border-emerald-700/50 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10 hover:scale-[1.02] relative overflow-hidden">
+                <div className="absolute -top-2 -right-2 bg-emerald-500 text-black text-xs font-bold px-3 py-1 rounded-bl-lg">POPULAR</div>
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/20 to-transparent pointer-events-none"></div>
+                <CardHeader className="relative z-10">
+                  <CardTitle className="text-2xl text-white mb-2">Pro</CardTitle>
+                  <div className="text-3xl font-bold text-white">$9<span className="text-lg font-normal text-gray-400">/month</span></div>
+                </CardHeader>
+                <CardContent className="relative z-10 space-y-4">
+                  <div className="space-y-3">
+                    {[
+                      "Unlimited resume optimizations",
+                      "Advanced AI analysis",
+                      "All premium templates",
+                      "Priority processing",
+                      "ATS simulation & scoring",
+                      "Cover letter generation",
+                      "LinkedIn optimization tips",
+                      "24/7 priority support"
+                    ].map((feature, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                        <span className="text-gray-300">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Button className="w-full bg-emerald-600 text-white hover:bg-emerald-500 border-0 hover:shadow-lg hover:shadow-emerald-500/25">
+                    Upgrade to Pro
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Before/After Comparison Section */}
+          <div className="mt-32 mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 text-white">
+              See the Difference AI Makes
+            </h2>
+            <p className="text-lg text-slate-400 text-center mb-12 max-w-2xl mx-auto">
+              Real examples of how ReWork transforms generic bullets into powerful achievements
+            </p>
+            <div className="space-y-8 max-w-5xl mx-auto">
+              {[
+                {
+                  before: "Responsible for managing team projects",
+                  after: "Led cross-functional team of 8, delivering 12 projects on time and 15% under budget"
+                },
+                {
+                  before: "Helped increase sales",
+                  after: "Drove 34% YoY revenue growth through strategic account expansion and pipeline optimization"
+                },
+                {
+                  before: "Worked on improving customer satisfaction",
+                  after: "Elevated customer satisfaction scores by 28% through implementation of data-driven feedback systems"
+                }
+              ].map((example, index) => (
+                <div key={index} className="grid md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
+                  <Card className="bg-gray-900/50 backdrop-blur-xl border-red-900/30 hover:border-red-800/50 transition-all duration-300 p-6">
+                    <div className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-2">Before</div>
+                    <p className="text-gray-300">{example.before}</p>
+                  </Card>
+                  <div className="hidden md:flex items-center justify-center">
+                    <div className="bg-gradient-to-r from-red-500 to-emerald-500 p-3 rounded-full">
+                      <ArrowRight className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                  <Card className="bg-gray-900/50 backdrop-blur-xl border-emerald-900/30 hover:border-emerald-800/50 transition-all duration-300 p-6">
+                    <div className="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-2">After AI Optimization</div>
+                    <p className="text-white font-medium">{example.after}</p>
+                  </Card>
+                </div>
+              ))}
+            </div>
           </div>
         </main>
 
@@ -655,33 +499,11 @@ export default function HomePage() {
         <footer className="border-t border-white/10 backdrop-blur-xl bg-slate-900/30 mt-24 hover:border-white/20 transition-colors duration-500">
           <div className="container mx-auto px-4 py-12 text-center">
             <p className="text-slate-400 hover:text-slate-300 transition-colors duration-300 cursor-default">
-              © 2025 ReWork • Professional Resume Optimization Platform
+              © 2026 ReWork • Professional Resume Optimization Platform
             </p>
           </div>
         </footer>
       </div>
-
-      {/* Custom CSS for Advanced Animations */}
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          33% { transform: translateY(-10px) rotate(1deg); }
-          66% { transform: translateY(-5px) rotate(-1deg); }
-        }
-        
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-        
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        
-        .animate-shimmer {
-          animation: shimmer 2s infinite;
-        }
-      `}</style>
     </div>
   )
 }

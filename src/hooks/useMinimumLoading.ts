@@ -1,9 +1,9 @@
 // 🔧 UPDATED: src/hooks/useMinimumLoading.ts
-// Longer display times so users can enjoy the animations!
+// Optimized for fast user experience
 
 import { useState, useEffect } from 'react';
 
-export function useMinimumLoading(minimumMs: number = 3000) {
+export function useMinimumLoading(minimumMs: number = 100) {
   const [isLoading, setIsLoading] = useState(true);
   const [shouldShowContent, setShouldShowContent] = useState(false);
 
@@ -27,19 +27,19 @@ export function useMinimumLoading(minimumMs: number = 3000) {
   };
 }
 
-// 🎨 Updated pre-configured hooks with faster, more responsive times
+// 🎨 Optimized pre-configured hooks for immediate responsiveness
 export function useDashboardLoading() {
-  return useMinimumLoading(1500); // 1.5 seconds - quick but smooth
+  return useMinimumLoading(100); // 0.1 seconds - immediate response
 }
 
 export function useResumeLoading() {
-  return useMinimumLoading(200); // 0.2 seconds - immediate response
+  return useMinimumLoading(100); // 0.1 seconds - immediate response
 }
 
 export function useJobDescriptionLoading() {
-  return useMinimumLoading(1000); // 1 second - snappy
+  return useMinimumLoading(100); // 0.1 seconds - immediate response
 }
 
 export function useFinalizeLoading() {
-  return useMinimumLoading(800); // 0.8 seconds - nice loading experience
+  return useMinimumLoading(100); // 0.1 seconds - immediate response
 }

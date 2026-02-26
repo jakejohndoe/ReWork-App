@@ -12,10 +12,10 @@ export default function DashboardLoading() {
 
   const steps = [
     { icon: User, text: "Loading your profile...", delay: 0 },
-    { icon: FileText, text: "Preparing resume editor...", delay: 800 },
-    { icon: Briefcase, text: "Setting up templates...", delay: 1600 },
-    { icon: GraduationCap, text: "Initializing AI optimizer...", delay: 2400 },
-    { icon: Star, text: "Almost ready...", delay: 3200 }
+    { icon: FileText, text: "Preparing resume editor...", delay: 100 },
+    { icon: Briefcase, text: "Setting up templates...", delay: 200 },
+    { icon: GraduationCap, text: "Initializing AI optimizer...", delay: 300 },
+    { icon: Star, text: "Almost ready...", delay: 400 }
   ]
 
   // Client-side mount check

@@ -35,7 +35,7 @@ interface LogoProps {
   variant?: 'detailed' | 'simple'
   size?: 'xs' | 'small' | 'medium' | 'large'
   className?: string
-  badgePosition?: 'side' | 'below'
+  badgePosition?: 'side' | 'below' | 'none'
   showBadge?: boolean
 }
 
@@ -46,12 +46,12 @@ const sizeClasses = {
   large: 'w-80 h-80'   // 4x from w-20 h-20
 }
 
-export function Logo({ 
-  variant = 'simple', 
+export function Logo({
+  variant = 'simple',
   size = 'medium',
   className,
-  badgePosition = 'side',
-  showBadge = true
+  badgePosition = 'none',
+  showBadge = false
 }: LogoProps) {
   const src = variant === 'detailed' 
     ? '/rework-logo-detailed-cropped2.png' 

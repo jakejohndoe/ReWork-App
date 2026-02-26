@@ -8,6 +8,7 @@ import ResumeUploader from "@/components/resume-uploader"
 import ResumeLoader from "@/components/resume-loader"
 import Navigation from "@/components/navigation"
 import StatusBar from "@/components/status-bar"
+import { ChatBubble } from "@/components/ui/chat-bubble"
 import {
   FileText,
   Plus,
@@ -21,32 +22,25 @@ export default function DashboardPage() {
 
   // Loading state management
   const [shouldShowContent, setShouldShowContent] = useState(false)
-  const [loadingStartTime] = useState(() => Date.now())
   const [isDataLoaded, setIsDataLoaded] = useState(false)
-  const [isMinTimeElapsed, setIsMinTimeElapsed] = useState(false)
 
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [resumes, setResumes] = useState<any[]>([])
   const [deletingResumeId, setDeletingResumeId] = useState<string | null>(null)
 
-  // Coordinated loading check
+  // Show content as soon as data is loaded
   useEffect(() => {
-    if (isDataLoaded && isMinTimeElapsed) {
+    if (isDataLoaded) {
       setShouldShowContent(true)
     }
-  }, [isDataLoaded, isMinTimeElapsed])
+  }, [isDataLoaded])
 
   // Main data loading effect
   useEffect(() => {
     if (status === 'loading') return
     if (status !== 'authenticated') return
 
-    // Start minimum time timer (1.5 seconds for smooth transition)
-    const minTimeTimer = setTimeout(() => {
-      setIsMinTimeElapsed(true)
-    }, 1500)
-
-    // Start data fetching
+    // Start data fetching immediately
     const fetchData = async () => {
       try {
         const response = await fetch('/api/resumes')
@@ -63,10 +57,6 @@ export default function DashboardPage() {
     }
 
     fetchData()
-
-    return () => {
-      clearTimeout(minTimeTimer)
-    }
   }, [status, session])
 
   // Show loader while loading
@@ -289,6 +279,9 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Support Chat Bubble */}
+      <ChatBubble />
     </div>
   )
 }
