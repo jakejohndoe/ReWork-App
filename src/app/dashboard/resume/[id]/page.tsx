@@ -30,7 +30,11 @@ import {
   X,
   Check,
   Undo2,
-  Briefcase
+  Briefcase,
+  User,
+  FileText,
+  GraduationCap,
+  Wrench
 } from "lucide-react"
 
 // Professional Resume Preview Component
@@ -72,7 +76,7 @@ function SimpleResumePreview({ resumeData, resumeTitle, className = "" }: { resu
 
   const name = extractName(resumeData?.contactInfo || resumeData?.contact)
   const contact = getContactDetails(resumeData?.contactInfo || resumeData?.contact)
-  const hasResumeData = !!(resumeData?.contactInfo || resumeData?.summary || resumeData?.experience?.length)
+  const hasResumeData = !!(resumeData?.contactInfo || resumeData?.professionalSummary || resumeData?.workExperience?.length)
 
   return (
     <div className={`bg-white text-gray-900 p-8 ${className}`}>
@@ -97,24 +101,24 @@ function SimpleResumePreview({ resumeData, resumeTitle, className = "" }: { resu
           </div>
 
           {/* Professional Summary */}
-          {resumeData?.summary && (
+          {resumeData?.professionalSummary?.summary && (
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-2 uppercase tracking-wider">
                 Professional Summary
               </h2>
               <p className="text-sm text-gray-700 leading-relaxed">
-                {resumeData.summary}
+                {resumeData.professionalSummary.summary}
               </p>
             </div>
           )}
 
           {/* Work Experience */}
-          {resumeData?.experience?.length > 0 && (
+          {resumeData?.workExperience?.length > 0 && (
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-3 uppercase tracking-wider">
                 Experience
               </h2>
-              {resumeData.experience.map((exp: any, index: number) => (
+              {resumeData.workExperience.map((exp: any, index: number) => (
                 <div key={index} className="mb-4">
                   <div className="flex justify-between items-start mb-1">
                     <div>
@@ -213,13 +217,13 @@ export default function UnifiedEditorPage() {
           const resume = data.resume
           setResumeTitle(resume.title || 'Untitled Resume')
           setResumeData({
-            contactInfo: resume.contactInfo || {},
-            summary: resume.summary || '',
-            experience: resume.experience || [],
+            contactInfo: resume.contactInfo || { firstName: '', lastName: '', email: '', phone: '', location: '' },
+            professionalSummary: resume.professionalSummary || undefined,
+            workExperience: resume.workExperience || [],
             education: resume.education || [],
-            skills: resume.skills || {},
-            certifications: resume.certifications || [],
-            achievements: resume.achievements || []
+            skills: resume.skills || { technical: [], frameworks: [], tools: [], cloud: [], databases: [], soft: [], certifications: [] },
+            projects: resume.projects || [],
+            additionalSections: resume.additionalSections || undefined
           })
           setOriginalContent(resume.originalContent || null)
           setTailoredJobCompany(resume.tailoredJobCompany || null)
@@ -239,7 +243,7 @@ export default function UnifiedEditorPage() {
   }, [resumeId])
 
   // Auto-save functionality with debouncing
-  const saveTimeoutRef = useRef<NodeJS.Timeout>()
+  const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   const saveResume = async (showToast = true) => {
     if (!resumeData) return
@@ -253,12 +257,12 @@ export default function UnifiedEditorPage() {
         body: JSON.stringify({
           title: resumeTitle,
           contactInfo: resumeData.contactInfo,
-          summary: resumeData.summary,
-          experience: resumeData.experience,
+          professionalSummary: resumeData.professionalSummary,
+          workExperience: resumeData.workExperience,
           education: resumeData.education,
-          skills: resumeData.skills,
-          certifications: resumeData.certifications,
-          achievements: resumeData.achievements
+          skills: resumeData.skills || { technical: [], frameworks: [], tools: [], cloud: [], databases: [], soft: [], certifications: [] },
+          projects: resumeData.projects,
+          additionalSections: resumeData.additionalSections
         })
       })
 
@@ -484,13 +488,13 @@ export default function UnifiedEditorPage() {
                   onAutoFillComplete={(data) => {
                     if (data) {
                       setResumeData({
-                        contactInfo: data.contactInfo || {},
-                        summary: data.professionalSummary?.summary || '',
-                        experience: data.workExperience || [],
+                        contactInfo: data.contactInfo || { firstName: '', lastName: '', email: '', phone: '', location: '' },
+                        professionalSummary: data.professionalSummary || undefined,
+                        workExperience: data.workExperience || [],
                         education: data.education || [],
-                        skills: data.skills || {},
-                        certifications: data.certifications || [],
-                        achievements: data.achievements || []
+                        skills: data.skills || { technical: [], frameworks: [], tools: [], cloud: [], databases: [], soft: [], certifications: [] },
+                        projects: data.projects || [],
+                        additionalSections: data.additionalSections || undefined
                       })
                       toast.success('Resume auto-filled successfully')
                     }
@@ -501,10 +505,11 @@ export default function UnifiedEditorPage() {
               {/* Contact Information */}
               <CollapsibleSectionWrapper
                 title="Contact Information"
+                icon={<User className="w-4 h-4" />}
                 isComplete={!!(resumeData?.contactInfo && (resumeData.contactInfo as ContactInfo).email)}
               >
                 <ContactInfoSection
-                  data={resumeData?.contactInfo as ContactInfo || {}}
+                  contactInfo={resumeData?.contactInfo as ContactInfo || { firstName: '', lastName: '', email: '', phone: '', location: '' }}
                   onChange={(data) => setResumeData(prev => prev ? {...prev, contactInfo: data} : null)}
                 />
               </CollapsibleSectionWrapper>
@@ -512,32 +517,35 @@ export default function UnifiedEditorPage() {
               {/* Professional Summary */}
               <CollapsibleSectionWrapper
                 title="Professional Summary"
-                isComplete={!!(resumeData?.summary && resumeData.summary.length > 50)}
+                icon={<FileText className="w-4 h-4" />}
+                isComplete={!!(resumeData?.professionalSummary?.summary && resumeData.professionalSummary.summary.length > 50)}
               >
                 <ProfessionalSummarySection
-                  data={{ summary: resumeData?.summary || '' }}
-                  onChange={(data) => setResumeData(prev => prev ? {...prev, summary: data.summary} : null)}
+                  professionalSummary={resumeData?.professionalSummary || { summary: '', targetRole: '', keyStrengths: [], careerLevel: 'mid' }}
+                  onChange={(data) => setResumeData(prev => prev ? {...prev, professionalSummary: data} : null)}
                 />
               </CollapsibleSectionWrapper>
 
               {/* Work Experience */}
               <CollapsibleSectionWrapper
                 title="Work Experience"
-                isComplete={!!(resumeData?.experience && resumeData.experience.length > 0)}
+                icon={<Briefcase className="w-4 h-4" />}
+                isComplete={!!(resumeData?.workExperience && resumeData.workExperience.length > 0)}
               >
                 <WorkExperienceSection
-                  data={resumeData?.experience || []}
-                  onChange={(data) => setResumeData(prev => prev ? {...prev, experience: data} : null)}
+                  workExperience={resumeData?.workExperience || []}
+                  onChange={(data) => setResumeData(prev => prev ? {...prev, workExperience: data} : null)}
                 />
               </CollapsibleSectionWrapper>
 
               {/* Education */}
               <CollapsibleSectionWrapper
                 title="Education"
+                icon={<GraduationCap className="w-4 h-4" />}
                 isComplete={!!(resumeData?.education && resumeData.education.length > 0)}
               >
                 <EducationSection
-                  data={resumeData?.education || []}
+                  education={resumeData?.education || []}
                   onChange={(data) => setResumeData(prev => prev ? {...prev, education: data} : null)}
                 />
               </CollapsibleSectionWrapper>
@@ -545,10 +553,11 @@ export default function UnifiedEditorPage() {
               {/* Skills */}
               <CollapsibleSectionWrapper
                 title="Skills"
+                icon={<Wrench className="w-4 h-4" />}
                 isComplete={!!(resumeData?.skills && Object.values(resumeData.skills).flat().length > 0)}
               >
                 <SkillsSection
-                  data={resumeData?.skills || {}}
+                  skills={resumeData?.skills || { technical: [], frameworks: [], tools: [], cloud: [], databases: [], soft: [], certifications: [] }}
                   onChange={(data) => setResumeData(prev => prev ? {...prev, skills: data} : null)}
                 />
               </CollapsibleSectionWrapper>

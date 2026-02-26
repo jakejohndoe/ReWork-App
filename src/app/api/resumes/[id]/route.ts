@@ -152,15 +152,6 @@ export async function PATCH(
       updateData.skills = skills
     }
 
-    // Handle certifications and achievements if provided
-    if (body.certifications !== undefined) {
-      updateData.certifications = body.certifications
-    }
-
-    if (body.achievements !== undefined) {
-      updateData.achievements = body.achievements
-    }
-
     if (projects !== undefined) {
       updateData.projects = projects
     }
