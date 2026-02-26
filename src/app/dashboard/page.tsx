@@ -12,7 +12,6 @@ import {
   FileText,
   Plus,
   Trash2,
-  Clock,
   ChevronRight,
   Briefcase
 } from "lucide-react"

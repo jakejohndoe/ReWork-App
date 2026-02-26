@@ -189,7 +189,7 @@ export async function POST(
         fileType: resume.contentType || '',
         uploadedAt: new Date().toISOString(),
         s3Key: resume.s3Key,
-        s3Bucket: process.env.AWS_S3_BUCKET_NAME || '',
+        s3Bucket: 'resumes',
         extractionStatus: 'completed',
         extractedAt: new Date().toISOString(),
         autoFillVersion: '1.1', // Updated version

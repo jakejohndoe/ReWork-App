@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { uploadToS3, generateS3Key, getContentType } from '@/lib/storage'
+import { uploadToStorage, generateStorageKey, getContentType } from '@/lib/storage'
 import { generatePDFThumbnail } from '@/lib/pdf-thumbnail-generator'
 
 export async function POST(request: NextRequest) {
@@ -71,16 +71,16 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer())
     console.log('📄 Buffer created, size:', buffer.length);
     
-    // Generate S3 key
-    const s3Key = generateS3Key(user.id, file.name)
+    // Generate storage key
+    const storageKey = generateStorageKey(user.id, file.name)
     const contentType = getContentType(file.name)
 
-    console.log('🔧 S3 Upload starting:', { s3Key, contentType, fileSize: file.size })
+    console.log('🔧 Storage Upload starting:', { storageKey, contentType, fileSize: file.size })
 
-    // Upload to S3
-    const uploadResult = await uploadToS3(
+    // Upload to storage
+    const uploadResult = await uploadToStorage(
       buffer,
-      s3Key,
+      storageKey,
       contentType,
       {
         'user-id': user.id,
@@ -88,10 +88,10 @@ export async function POST(request: NextRequest) {
       }
     )
 
-    console.log('📤 S3 Upload result:', uploadResult)
+    console.log('📤 Storage Upload result:', uploadResult)
 
     if (!uploadResult.success) {
-      console.log('❌ S3 upload failed:', uploadResult.error);
+      console.log('❌ Storage upload failed:', uploadResult.error);
       return NextResponse.json({ success: false, error: 'Upload failed: ' + uploadResult.error }, { status: 500 })
     }
 
@@ -119,9 +119,9 @@ export async function POST(request: NextRequest) {
         title,
         userId: user.id,
         
-        // S3 storage info
-        s3Key,
-        s3Bucket: 'resumes', // Supabase bucket name
+        // Storage info
+        s3Key: storageKey,
+        s3Bucket: 'resumes', // Storage bucket name
         originalFileName: file.name,
         fileSize: file.size,
         contentType: file.type,
@@ -135,8 +135,8 @@ export async function POST(request: NextRequest) {
             fileSize: file.size,
             fileType: file.type,
             uploadedAt: new Date().toISOString(),
-            s3Key,
-            s3Bucket: 'resumes', // Supabase bucket name
+            s3Key: storageKey,
+            s3Bucket: 'resumes', // Storage bucket name
             extractionStatus: 'pending',
           }
         },

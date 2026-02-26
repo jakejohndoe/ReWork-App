@@ -45,7 +45,7 @@ export async function ensureBucketExists() {
 }
 
 // Upload file to Supabase Storage
-export async function uploadToS3(
+export async function uploadToStorage(
   file: Buffer,
   key: string,
   contentType: string,
@@ -65,8 +65,7 @@ export async function uploadToS3(
         contentType,
         upsert: false, // Don't overwrite existing files
         cacheControl: '3600',
-        // Note: Supabase doesn't directly support metadata like S3,
-        // but we can store it in the database if needed
+        // Note: Metadata can be stored in the database if needed
       })
 
     if (error) {
@@ -81,7 +80,7 @@ export async function uploadToS3(
     return {
       success: true,
       key,
-      etag: data.id || 'supabase-' + Date.now(), // Supabase doesn't provide ETags like S3
+      etag: data.id || 'supabase-' + Date.now(),
       location: urlData.publicUrl,
     }
   } catch (error) {
@@ -118,7 +117,7 @@ export async function getSignedDownloadUrl(key: string, expiresIn: number = 3600
 }
 
 // Delete file from Supabase Storage
-export async function deleteFromS3(key: string) {
+export async function deleteFromStorage(key: string) {
   try {
     const { error } = await supabase.storage
       .from(BUCKET_NAME)
@@ -140,8 +139,8 @@ export async function deleteFromS3(key: string) {
   }
 }
 
-// Generate unique storage key for a file (same as S3)
-export function generateS3Key(userId: string, originalFileName: string): string {
+// Generate unique storage key for a file
+export function generateStorageKey(userId: string, originalFileName: string): string {
   const timestamp = Date.now()
   const randomId = Math.random().toString(36).substring(2, 8)
   const fileExtension = originalFileName.split('.').pop()
@@ -149,7 +148,7 @@ export function generateS3Key(userId: string, originalFileName: string): string 
   return `users/${userId}/resumes/${timestamp}-${randomId}.${fileExtension}`
 }
 
-// Helper to get file content type (same as S3)
+// Helper to get file content type
 export function getContentType(fileName: string): string {
   const extension = fileName.toLowerCase().split('.').pop()
 

@@ -18,7 +18,8 @@ import { ArrowLeft, CheckCircle, Download, Sparkles, ArrowRight, Crown, Palette,
 import { Logo, BetaBadge } from '@/components/ui/logo'
 import { toast } from 'sonner'
 import { SVGResumePreview, SVGResumePreviewRef } from '@/components/resume/SVGResumePreview'
-import confetti from 'canvas-confetti'
+// Dynamic import for confetti to reduce initial bundle size
+const confetti = typeof window !== 'undefined' ? require('canvas-confetti') : null
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface Template {
