@@ -5,6 +5,7 @@ import { useSession, signOut } from "next-auth/react"
 import { Settings, User, LogOut } from "lucide-react"
 import { useState } from "react"
 import { SettingsModal } from "@/components/settings-modal"
+import { UserAvatar } from "@/components/ui/avatar"
 
 interface NavigationProps {
   className?: string
@@ -40,26 +41,23 @@ export default function Navigation({ className = "", showUserMenu = true, childr
             {/* Right Side Actions */}
             {showUserMenu && session && (
               <div className="flex items-center space-x-2">
-                {/* Settings Button */}
-                <button
-                  onClick={() => setIsSettingsOpen(true)}
-                  className="p-2 text-slate-400 hover:text-white transition-all rounded-md hover:bg-white/5"
-                  title="Settings"
-                >
-                  <Settings className="w-4 h-4" />
-                </button>
-
                 {/* User Menu */}
-                <div className="flex items-center space-x-3 pl-3 ml-1 border-l border-white/6">
-                  {/* User Avatar */}
-                  <div className="flex items-center space-x-2">
-                    <div className="w-7 h-7 rounded-full bg-slate-800/50 border border-white/10 flex items-center justify-center">
-                      <User className="w-3.5 h-3.5 text-slate-400" />
-                    </div>
-                    <span className="text-[13px] text-slate-400 hidden sm:block">
+                <div className="flex items-center space-x-3">
+                  {/* Clickable User Avatar */}
+                  <button
+                    onClick={() => setIsSettingsOpen(true)}
+                    className="flex items-center space-x-2 p-2 rounded-md hover:bg-white/5 transition-all group"
+                    title="Account Settings"
+                  >
+                    <UserAvatar
+                      userId={session.user?.id}
+                      size="md"
+                      className="group-hover:border-white/20 transition-colors"
+                    />
+                    <span className="text-[13px] text-slate-400 hidden sm:block group-hover:text-white transition-colors">
                       {session.user?.name?.split(' ')[0] || 'User'}
                     </span>
-                  </div>
+                  </button>
 
                   {/* Sign Out */}
                   <button

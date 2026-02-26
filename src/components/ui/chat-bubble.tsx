@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from 'react'
-import { MessageCircle, X, Send } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import { MessageCircle, X, Send, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -10,8 +11,22 @@ interface ChatBubbleProps {
 }
 
 export function ChatBubble({ className }: ChatBubbleProps) {
+  const { data: session } = useSession()
   const [isOpen, setIsOpen] = useState(false)
   const [message, setMessage] = useState('')
+  const [hasNotification, setHasNotification] = useState(false)
+  const [isFirstOpen, setIsFirstOpen] = useState(true)
+
+  useEffect(() => {
+    const handleChatNotification = () => {
+      setHasNotification(true)
+    }
+
+    window.addEventListener('show-chat-notification', handleChatNotification)
+    return () => {
+      window.removeEventListener('show-chat-notification', handleChatNotification)
+    }
+  }, [])
 
   const handleSendMessage = () => {
     if (message.trim()) {
@@ -27,6 +42,12 @@ export function ChatBubble({ className }: ChatBubbleProps) {
       e.preventDefault()
       handleSendMessage()
     }
+  }
+
+  const handleOpen = () => {
+    setIsOpen(true)
+    setHasNotification(false)
+    setIsFirstOpen(false)
   }
 
   return (
@@ -52,12 +73,32 @@ export function ChatBubble({ className }: ChatBubbleProps) {
 
           {/* Messages Area */}
           <div className="flex-1 p-4 space-y-3 h-64 overflow-y-auto">
-            <div className="bg-muted/50 p-3 rounded-lg text-sm">
-              <div className="font-medium text-foreground mb-1">ReWork Support</div>
-              <div className="text-muted-foreground">
-                Hi! Welcome to ReWork. How can we help you today?
+            {!isFirstOpen ? (
+              <div className="bg-gradient-to-br from-purple-500/20 to-blue-500/20 p-4 rounded-lg text-sm border border-purple-400/30">
+                <div className="font-medium text-white mb-2 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-purple-400" />
+                  ReWork Support
+                </div>
+                <div className="text-slate-200 mb-3">
+                  Welcome back! You have {session?.user?.resumesCreated || 0} resume{(session?.user?.resumesCreated || 0) !== 1 ? 's' : ''}. Here's what's new in ReWork:
+                </div>
+                <div className="text-sm text-slate-300 space-y-1">
+                  <div>• ✨ New AI optimization engine</div>
+                  <div>• 🎨 Updated dashboard design</div>
+                  <div>• 🚀 Faster PDF processing</div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-slate-800/50 p-3 rounded-lg text-sm border border-slate-700">
+                <div className="font-medium text-white mb-1 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-cyan-400" />
+                  ReWork Support
+                </div>
+                <div className="text-slate-300">
+                  Hi! How can we help you today?
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Input Area */}
@@ -88,17 +129,24 @@ export function ChatBubble({ className }: ChatBubbleProps) {
       )}
 
       {/* Chat Button */}
-      <Button
-        onClick={() => setIsOpen(!isOpen)}
-        size="lg"
-        className="h-14 w-14 rounded-full shadow-2xl bg-primary hover:bg-primary/90 text-primary-foreground"
-      >
-        {isOpen ? (
-          <X className="h-6 w-6" />
-        ) : (
-          <MessageCircle className="h-6 w-6" />
+      <div className="relative">
+        <Button
+          onClick={() => isOpen ? setIsOpen(false) : handleOpen()}
+          size="lg"
+          className="h-14 w-14 rounded-full shadow-2xl bg-primary hover:bg-primary/90 text-primary-foreground"
+        >
+          {isOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <MessageCircle className="h-6 w-6" />
+          )}
+        </Button>
+
+        {/* Notification Dot */}
+        {hasNotification && !isOpen && (
+          <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-background animate-pulse" />
         )}
-      </Button>
+      </div>
     </div>
   )
 }

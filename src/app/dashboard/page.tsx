@@ -215,7 +215,28 @@ export default function DashboardPage() {
 
             {/* Resume List */}
             <div className="space-y-3">
-              {resumes.map((resume) => (
+              {resumes.length === 0 ? (
+                /* Empty State for Uploaded Resumes */
+                <div className="bg-slate-800/30 backdrop-blur-sm border border-white/10 rounded-lg p-6 text-center">
+                  <div className="w-12 h-12 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <FileText className="w-6 h-6 text-slate-400" />
+                  </div>
+                  <h3 className="text-base font-medium text-slate-200 mb-2">
+                    No resumes yet
+                  </h3>
+                  <p className="text-sm text-slate-400 mb-4">
+                    Upload your first resume to get started with AI optimization
+                  </p>
+                  <button
+                    onClick={() => setIsUploadOpen(true)}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-sm font-medium transition-colors flex items-center gap-2 mx-auto"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Upload Resume
+                  </button>
+                </div>
+              ) : (
+                resumes.map((resume) => (
                 <div
                   key={resume.id}
                   className="bg-slate-800/40 backdrop-blur-sm border border-white/10 hover:border-white/20 rounded-lg p-4 transition-all duration-200 group"
@@ -251,21 +272,23 @@ export default function DashboardPage() {
                     </button>
                   </div>
                 </div>
-              ))}
+              )))}
 
-              {/* Upload Button */}
-              <button
-                onClick={() => setIsUploadOpen(true)}
-                className="w-full border-2 border-dashed border-slate-600 hover:border-slate-500 rounded-lg p-6 text-center transition-colors group"
-              >
-                <Upload className="w-6 h-6 text-slate-500 group-hover:text-slate-400 mx-auto mb-2" />
-                <div className="text-sm font-medium text-slate-400 group-hover:text-slate-300">
-                  Upload Resume
-                </div>
-                <div className="text-xs text-slate-500">
-                  PDF, DOC, DOCX up to 10MB
-                </div>
-              </button>
+              {resumes.length > 0 && (
+                /* Upload Button */
+                <button
+                  onClick={() => setIsUploadOpen(true)}
+                  className="w-full border-2 border-dashed border-slate-600 hover:border-slate-500 rounded-lg p-6 text-center transition-colors group"
+                >
+                  <Upload className="w-6 h-6 text-slate-500 group-hover:text-slate-400 mx-auto mb-2" />
+                  <div className="text-sm font-medium text-slate-400 group-hover:text-slate-300">
+                    Upload Another Resume
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    PDF, DOC, DOCX up to 10MB
+                  </div>
+                </button>
+              )}
             </div>
           </div>
 
@@ -283,23 +306,43 @@ export default function DashboardPage() {
             </div>
 
             {jobApplications.length === 0 ? (
-              /* Empty State */
+              /* Enhanced Empty State */
               <div className="bg-slate-800/30 backdrop-blur-sm border border-white/10 rounded-lg p-8 text-center">
-                <div className="w-16 h-16 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Zap className="w-8 h-8 text-slate-400" />
+                <div className="w-16 h-16 bg-gradient-to-br from-green-600/20 to-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/30">
+                  <Zap className="w-8 h-8 text-green-400" />
                 </div>
-                <h3 className="text-lg font-medium text-slate-200 mb-2">
-                  Tailor a Resume
+                <h3 className="text-lg font-medium text-white mb-2">
+                  Create Your First Tailored Resume
                 </h3>
-                <p className="text-sm text-slate-400 mb-4 max-w-sm mx-auto">
-                  Pick a resume, add a job description, and let AI optimize it for maximum impact
+                <p className="text-sm text-slate-400 mb-6 max-w-md mx-auto leading-relaxed">
+                  Transform your resume for each job application. Our AI analyzes job descriptions and optimizes your content for maximum impact and ATS compatibility.
                 </p>
-                {resumes.length > 0 && (
-                  <Link href={`/dashboard/resume/${resumes[0].id}`}>
-                    <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors">
-                      Get Started
+
+                {resumes.length > 0 ? (
+                  <div className="space-y-3">
+                    <Link href={`/dashboard/resume/${resumes[0].id}`}>
+                      <button className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors flex items-center gap-2 mx-auto">
+                        <Zap className="w-4 h-4" />
+                        Start Tailoring
+                      </button>
+                    </Link>
+                    <div className="text-xs text-slate-500">
+                      Uses: {resumes[0]?.title || 'your uploaded resume'}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="text-sm text-slate-500 bg-slate-700/30 border border-slate-600 rounded-lg p-3 mb-4">
+                      <strong className="text-slate-400">💡 Tip:</strong> Upload a resume first to start tailoring
+                    </div>
+                    <button
+                      onClick={() => setIsUploadOpen(true)}
+                      className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-sm font-medium transition-colors flex items-center gap-2 mx-auto"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Upload Resume First
                     </button>
-                  </Link>
+                  </div>
                 )}
               </div>
             ) : (

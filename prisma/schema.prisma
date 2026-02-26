@@ -46,21 +46,24 @@ model VerificationToken {
 }
 
 model User {
-  id             String           @id @default(cuid())
-  name           String?
-  email          String           @unique
-  emailVerified  DateTime?
-  image          String?
-  plan           Plan             @default(FREE)
-  resumesCreated Int              @default(0)
-  lastActiveAt   DateTime         @default(now())
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  accounts       Account[]
-  feedback       Feedback[]
-  applications   JobApplication[]
-  resumes        Resume[]
-  sessions       Session[]
+  id                     String           @id @default(cuid())
+  name                   String?
+  email                  String           @unique
+  emailVerified          DateTime?
+  image                  String?
+  plan                   Plan             @default(FREE)
+  resumesCreated         Int              @default(0)
+  totalResumesCreated    Int              @default(0)
+  monthlyResumesCreated  Int              @default(0)
+  resumeCountResetAt     DateTime         @default(now())
+  lastActiveAt           DateTime         @default(now())
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  accounts               Account[]
+  feedback               Feedback[]
+  applications           JobApplication[]
+  resumes                Resume[]
+  sessions               Session[]
 
   @@map("users")
 }

@@ -28,9 +28,12 @@ export const authOptions: NextAuthOptions = {
         // Add plan and other data from database user
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
-          select: { 
+          select: {
             plan: true,
             resumesCreated: true,
+            totalResumesCreated: true,
+            monthlyResumesCreated: true,
+            resumeCountResetAt: true,
             createdAt: true,
             lastActiveAt: true
           }
@@ -38,6 +41,9 @@ export const authOptions: NextAuthOptions = {
         if (dbUser) {
           session.user.plan = dbUser.plan
           session.user.resumesCreated = dbUser.resumesCreated
+          session.user.totalResumesCreated = dbUser.totalResumesCreated
+          session.user.monthlyResumesCreated = dbUser.monthlyResumesCreated
+          session.user.resumeCountResetAt = dbUser.resumeCountResetAt
           session.user.createdAt = dbUser.createdAt
           session.user.lastActiveAt = dbUser.lastActiveAt
         }

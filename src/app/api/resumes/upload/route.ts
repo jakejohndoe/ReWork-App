@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { uploadToStorage, generateStorageKey, getContentType } from '@/lib/storage'
 import { generatePDFThumbnail } from '@/lib/pdf-thumbnail-generator'
+import { canCreateResume, incrementResumeCount } from '@/lib/resume-count'
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,14 +29,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
     }
 
-    console.log('👤 User found:', user.id, 'Total resumes created:', user.resumesCreated);
+    console.log('👤 User found:', user.id);
 
-    // Check plan limits - now using total resumes created
-    if (user.plan === 'FREE' && user.resumesCreated >= 3) {
-      console.log('❌ Plan limit reached');
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Free plan limit reached. Upgrade to upload more resumes.' 
+    // Check plan limits using new monthly count logic
+    const canCreate = await canCreateResume(user.id);
+    if (!canCreate) {
+      console.log('❌ Monthly resume limit reached');
+      return NextResponse.json({
+        success: false,
+        error: 'Monthly resume limit reached. Try again next month or upgrade to Pro.'
       }, { status: 403 })
     }
 
@@ -112,13 +114,12 @@ export async function POST(request: NextRequest) {
 
     console.log('💾 Creating resume record in database...');
 
-    // Create resume record and increment total count
-    const [resume] = await prisma.$transaction([
-      prisma.resume.create({
+    // Create resume record
+    const resume = await prisma.resume.create({
       data: {
         title,
         userId: user.id,
-        
+
         // Storage info
         s3Key: storageKey,
         s3Bucket: 'resumes', // Storage bucket name
@@ -126,7 +127,7 @@ export async function POST(request: NextRequest) {
         fileSize: file.size,
         contentType: file.type,
         thumbnailUrl: thumbnailUrl,
-        
+
         // Empty content - will be filled by auto-fill feature
         originalContent: {
           rawText: '',
@@ -155,12 +156,10 @@ export async function POST(request: NextRequest) {
         },
         wordCount: 0,
       }
-    }),
-    prisma.user.update({
-      where: { id: user.id },
-      data: { resumesCreated: { increment: 1 } }
     })
-  ])
+
+    // Increment resume count using new logic (handles monthly reset)
+    await incrementResumeCount(user.id)
 
     console.log('✅ Resume created successfully:', resume.id)
 
