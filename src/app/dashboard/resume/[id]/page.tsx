@@ -16,6 +16,8 @@ import ProfessionalSummarySection from '@/components/resume/ProfessionalSummaryS
 import { CollapsibleSectionWrapper } from '@/components/resume/CollapsibleSectionWrapper'
 import { ContactInfo, StructuredResumeData, WorkExperience, SkillsStructure, Education, ProfessionalSummary } from '@/types/resume'
 import ResumeLoader from '@/components/resume-loader'
+import ResumePreview from '@/components/resume/templates/ResumePreview'
+import TemplateSelector, { TemplateType } from '@/components/resume/templates/TemplateSelector'
 import {
   ArrowLeft,
   Save,
@@ -37,7 +39,7 @@ import {
   Wrench
 } from "lucide-react"
 
-// Professional Resume Preview Component
+// Legacy Simple Resume Preview Component (kept for fallback)
 function SimpleResumePreview({ resumeData, resumeTitle, className = "" }: { resumeData: any, resumeTitle?: string, className?: string }) {
   const extractName = (contactInfo?: string | ContactInfo) => {
     if (contactInfo && typeof contactInfo === 'object') {
@@ -191,6 +193,7 @@ export default function UnifiedEditorPage() {
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit')
   const [rightPanelMode, setRightPanelMode] = useState<'preview' | 'job'>('preview')
   const [isJobPanelOpen, setIsJobPanelOpen] = useState(true)
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>('classic')
 
   // Resume data
   const [resumeTitle, setResumeTitle] = useState<string>('')
@@ -472,8 +475,8 @@ export default function UnifiedEditorPage() {
       {/* Main Content Area */}
       <div className="flex-1 flex relative" style={{ paddingBottom: 'var(--status-bar-height)' }}>
         {/* Left Side - Resume Editor */}
-        <div className={`flex-1 overflow-y-auto transition-all duration-300 ${
-          isJobPanelOpen ? 'mr-[420px]' : 'mr-0'
+        <div className={`overflow-y-auto transition-all duration-300 ${
+          isJobPanelOpen ? 'w-[55%]' : 'flex-1'
         }`}>
           <div className="max-w-4xl mx-auto p-8 space-y-6">
             {/* Auto-fill Button */}
@@ -488,16 +491,46 @@ export default function UnifiedEditorPage() {
                   onAutoFillComplete={(data) => {
                     if (data) {
                       // Map API response structure to frontend structure
-                      setResumeData({
+                      const mappedData: StructuredResumeData = {
                         contactInfo: data.contact || { firstName: '', lastName: '', email: '', phone: '', location: '' },
-                        professionalSummary: data.summary || undefined,
+                        professionalSummary: typeof data.summary === 'string'
+                          ? { summary: data.summary, targetRole: '', keyStrengths: [], careerLevel: 'mid' }
+                          : data.summary || undefined,
                         workExperience: data.experience || [],
                         education: data.education || [],
-                        skills: data.skills || { technical: [], frameworks: [], tools: [], cloud: [], databases: [], soft: [], certifications: [] },
+                        skills: Array.isArray(data.skills)
+                          ? { technical: data.skills, frameworks: [], tools: [], cloud: [], databases: [], soft: [], certifications: [] }
+                          : data.skills || { technical: [], frameworks: [], tools: [], cloud: [], databases: [], soft: [], certifications: [] },
                         projects: data.projects || [],
                         additionalSections: data.additionalSections || undefined
-                      })
-                      toast.success('Resume auto-filled successfully')
+                      };
+
+                      setResumeData(mappedData);
+
+                      // Auto-expand sections that got populated
+                      setTimeout(() => {
+                        const sections = document.querySelectorAll('.cursor-pointer');
+                        sections.forEach(section => {
+                          const header = section as HTMLElement;
+                          if (header.textContent?.includes('Contact') && data.contact?.email) {
+                            header.click();
+                          }
+                          if (header.textContent?.includes('Summary') && data.summary) {
+                            header.click();
+                          }
+                          if (header.textContent?.includes('Experience') && data.experience?.length > 0) {
+                            header.click();
+                          }
+                          if (header.textContent?.includes('Education') && data.education?.length > 0) {
+                            header.click();
+                          }
+                          if (header.textContent?.includes('Skills') && data.skills?.length > 0) {
+                            header.click();
+                          }
+                        });
+                      }, 100);
+
+                      toast.success('Resume auto-filled successfully! Review each section to verify the information.');
                     }
                   }}
                 />
@@ -562,12 +595,32 @@ export default function UnifiedEditorPage() {
                   onChange={(data) => setResumeData(prev => prev ? {...prev, skills: data} : null)}
                 />
               </CollapsibleSectionWrapper>
+
+              {/* Next Step Guidance */}
+              <div className="mt-8 p-6 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border border-emerald-500/20 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-[14px] font-semibold text-white mb-1">Ready for the next step?</h3>
+                    <p className="text-[12px] text-slate-400">Add a target job to optimize your resume with AI</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setRightPanelMode('job');
+                      setIsJobPanelOpen(true);
+                    }}
+                    className="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-md text-[13px] font-medium transition-all inline-flex items-center gap-2 border border-emerald-500/30"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                    Add Target Job
+                  </button>
+                </div>
+              </div>
           </div>
         </div>
 
         {/* Right Side Panel - Preview or Job */}
         <div className={`fixed right-0 top-[104px] bottom-[32px] bg-slate-900/50 backdrop-blur-sm border-l border-white/10 transition-all duration-300 shadow-2xl ${
-          isJobPanelOpen ? 'w-[420px]' : 'w-0'
+          isJobPanelOpen ? 'w-[45%]' : 'w-0'
         }`}>
           {/* Toggle Tab */}
           <button
@@ -621,9 +674,22 @@ export default function UnifiedEditorPage() {
               {/* Panel Content */}
               {rightPanelMode === 'preview' ? (
                 /* Resume Preview */
-                <div className="flex-1 overflow-y-auto p-4">
-                  <div className="bg-white rounded-lg shadow-xl overflow-hidden">
-                    <SimpleResumePreview resumeData={resumeData} resumeTitle={resumeTitle} className="scale-90 origin-top" />
+                <div className="flex-1 overflow-y-auto">
+                  <div className="p-4">
+                    <TemplateSelector
+                      selectedTemplate={selectedTemplate}
+                      onTemplateChange={setSelectedTemplate}
+                      className="mb-4"
+                    />
+                  </div>
+                  <div className="px-4 pb-4">
+                    <div className="bg-white rounded-lg shadow-2xl overflow-auto" style={{ maxHeight: 'calc(100vh - 240px)' }}>
+                      <ResumePreview
+                        resumeData={resumeData}
+                        template={selectedTemplate}
+                        accentColor={selectedTemplate === 'classic' ? '#1e40af' : selectedTemplate === 'modern' ? '#7c3aed' : '#dc2626'}
+                      />
+                    </div>
                   </div>
                 </div>
               ) : (

@@ -307,7 +307,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-slate-900/95 backdrop-blur-xl border border-white/20 max-w-[600px] h-[450px] p-0 overflow-hidden">
+      <DialogContent className="bg-slate-900/95 backdrop-blur-xl border border-white/20 max-w-[800px] h-[550px] p-0 overflow-hidden">
         <div className="flex h-full">
           {/* Left Sidebar - Tab Navigation */}
           <div className="w-48 bg-slate-800/50 border-r border-white/10 p-4">
@@ -326,6 +326,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 return (
                   <button
                     key={tab.id}
+                    data-tab={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all ${
                       activeTab === tab.id

@@ -44,6 +44,11 @@ interface JobApplication {
 export default function DashboardPage() {
   const { data: session, status } = useSession()
 
+  // Set browser title
+  useEffect(() => {
+    document.title = "ReWork — Your Resumes"
+  }, [])
+
   // Loading state management
   const [shouldShowContent, setShouldShowContent] = useState(false)
   const [isDataLoaded, setIsDataLoaded] = useState(false)
@@ -185,13 +190,23 @@ export default function DashboardPage() {
             {isPremium ? "Pro Plan" : "Free Plan"} • {resumeCount}/{resumeLimit} resumes
           </Badge>
 
-          {/* Upgrade Button */}
+          {/* Upgrade Button - Opens Settings Modal */}
           {!isPremium && (
-            <Link href="/#pricing">
-              <button className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-sm font-medium transition-colors">
-                Upgrade to Pro
-              </button>
-            </Link>
+            <button
+              onClick={() => {
+                const settingsButton = document.querySelector('[title="Account Settings"]') as HTMLButtonElement
+                if (settingsButton) {
+                  settingsButton.click()
+                  setTimeout(() => {
+                    const billingTab = document.querySelector('[data-tab="billing"]') as HTMLButtonElement
+                    if (billingTab) billingTab.click()
+                  }, 100)
+                }
+              }}
+              className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-sm font-medium transition-colors"
+            >
+              Upgrade to Pro
+            </button>
           )}
         </div>
       </Navigation>
@@ -237,41 +252,48 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 resumes.map((resume) => (
-                <div
+                <Link
                   key={resume.id}
-                  className="bg-slate-800/40 backdrop-blur-sm border border-white/10 hover:border-white/20 rounded-lg p-4 transition-all duration-200 group"
+                  href={`/dashboard/resume/${resume.id}`}
+                  className="block"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-md bg-slate-700/50 border border-white/10 flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-4 h-4 text-slate-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-slate-200 truncate group-hover:text-white transition-colors">
-                        {resume.originalFileName || resume.title}
-                      </h3>
-                      <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
-                        <span>{formatTimeAgo(resume.updatedAt)}</span>
-                        {resume.fileSize && (
-                          <>
-                            <span>•</span>
-                            <span>{formatFileSize(resume.fileSize)}</span>
-                          </>
-                        )}
+                  <div className="bg-slate-800/40 backdrop-blur-sm border border-white/10 hover:border-white/20 rounded-lg p-4 transition-all duration-200 group cursor-pointer hover:bg-slate-800/50">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-md bg-slate-700/50 border border-white/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-4 h-4 text-slate-400" />
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-medium text-slate-200 truncate group-hover:text-white transition-colors">
+                          {resume.originalFileName || resume.title}
+                        </h3>
+                        <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
+                          <span>{formatTimeAgo(resume.updatedAt)}</span>
+                          {resume.fileSize && (
+                            <>
+                              <span>•</span>
+                              <span>{formatFileSize(resume.fileSize)}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleDeleteResume(resume.id)
+                        }}
+                        disabled={deletingResumeId === resume.id}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-500 hover:text-red-400 transition-all rounded-md hover:bg-red-500/10"
+                      >
+                        {deletingResumeId === resume.id ? (
+                          <div className="w-3.5 h-3.5 border border-red-400 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleDeleteResume(resume.id)}
-                      disabled={deletingResumeId === resume.id}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-500 hover:text-red-400 transition-all rounded-md hover:bg-red-500/10"
-                    >
-                      {deletingResumeId === resume.id ? (
-                        <div className="w-3.5 h-3.5 border border-red-400 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <Trash2 className="w-3.5 h-3.5" />
-                      )}
-                    </button>
                   </div>
-                </div>
+                </Link>
               )))}
 
               {resumes.length > 0 && (
@@ -320,14 +342,14 @@ export default function DashboardPage() {
 
                 {resumes.length > 0 ? (
                   <div className="space-y-3">
-                    <Link href={`/dashboard/resume/${resumes[0].id}`}>
+                    <Link href={`/dashboard/resume/${resumes[resumes.length - 1].id}`}>
                       <button className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors flex items-center gap-2 mx-auto">
                         <Zap className="w-4 h-4" />
                         Start Tailoring
                       </button>
                     </Link>
                     <div className="text-xs text-slate-500">
-                      Uses: {resumes[0]?.title || 'your uploaded resume'}
+                      Uses: {resumes[resumes.length - 1]?.originalFileName || resumes[resumes.length - 1]?.title || 'your most recent resume'}
                     </div>
                   </div>
                 ) : (

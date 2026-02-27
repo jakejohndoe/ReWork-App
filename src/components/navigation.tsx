@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
 import { Settings, User, LogOut } from "lucide-react"
+import { Logo } from "@/components/ui/logo"
 import { useState } from "react"
 import { SettingsModal } from "@/components/settings-modal"
 import { UserAvatar } from "@/components/ui/avatar"
@@ -30,6 +31,7 @@ export default function Navigation({ className = "", showUserMenu = true, childr
               href="/dashboard"
               className="flex items-center space-x-2 group"
             >
+              <Logo size="xs" variant="simple" showBadge={false} className="group-hover:scale-110 transition-all duration-300" />
               <span className="text-[15px] font-semibold text-slate-200 tracking-tight transition-all group-hover:text-white">
                 ReWork
               </span>

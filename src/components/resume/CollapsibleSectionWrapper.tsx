@@ -35,14 +35,10 @@ export const CollapsibleSectionWrapper: React.FC<CollapsibleSectionWrapperProps>
             <div className={`p-2 rounded-lg transition-colors ${isComplete ? 'bg-emerald-500/20' : 'bg-slate-700/50'}`}>
               {icon}
             </div>
-            <div>
+            <div className="flex items-center gap-3">
               <h3 className="text-[15px] font-semibold text-slate-200">{title}</h3>
-              {isComplete && (
-                <div className="flex items-center space-x-2 mt-1">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                  <span className="text-xs text-emerald-400">Complete</span>
-                </div>
-              )}
+              <div className={`w-2 h-2 rounded-full ${isComplete ? 'bg-emerald-500' : 'bg-gray-600'}`}
+                   title={isComplete ? 'Section complete' : 'Section incomplete'}></div>
             </div>
           </div>
           

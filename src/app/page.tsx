@@ -108,8 +108,8 @@ export default function HomePage() {
                 <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 group-hover:scale-105 transition-transform duration-300">ReWork</span>
               </Link>
 
-              {/* Navigation Links */}
-              <nav className="hidden md:flex items-center space-x-6">
+              {/* Navigation Links - moved to the right */}
+              <div className="flex items-center space-x-4">
                 <a
                   href="#pricing"
                   className="text-gray-300 hover:text-white transition-colors duration-200 font-medium"
@@ -120,9 +120,6 @@ export default function HomePage() {
                 >
                   Pricing
                 </a>
-              </nav>
-
-              <div className="flex items-center space-x-4">
                 <Link href="/auth/signin">
                   <Button
                     variant="ghost"
@@ -153,7 +150,7 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-gray-400/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
                 <span className="relative z-10 flex items-center gap-2 font-medium">
                   <span className="text-white animate-pulse">✦</span>
-                  3 Free Resumes • No Credit Card Required
+                  Upload • Optimize • Dominate
                   <span className="text-gray-300 animate-bounce text-xs">●</span>
                 </span>
               </Badge>
@@ -183,7 +180,7 @@ export default function HomePage() {
                     backgroundClip: 'text'
                   }}
                 >
-                  Smart Tech,
+                  smart tech,
                 </span>
                 <br />
                 <span className="text-slate-300 hover:text-slate-100 hover:scale-105 transition-all duration-300 inline-block mr-3">for</span>
@@ -204,7 +201,7 @@ export default function HomePage() {
                     backgroundClip: 'text'
                   }}
                 >
-                  Smarter Jobs
+                  smarter jobs
                 </span>
               </div>
             </h1>
@@ -212,10 +209,7 @@ export default function HomePage() {
             {/* Enhanced Description with Staggered Animation */}
             <div className="max-w-3xl mx-auto mb-14">
               <p className={`text-xl md:text-2xl text-slate-200 mb-4 font-medium hover:text-white transition-all duration-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '400ms' }}>
-                Transform Your Resume in Seconds with Revolutionary Optimization.
-              </p>
-              <p className={`text-lg text-slate-300 leading-relaxed hover:text-slate-200 transition-all duration-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '600ms' }}>
-                Upload • Optimize • Dominate
+                Transform your resume in seconds with revolutionary optimization.
               </p>
             </div>
 
@@ -235,6 +229,13 @@ export default function HomePage() {
                   <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"></div>
                 </button>
               </Link>
+            </div>
+
+            {/* Badge under CTA */}
+            <div className={`transition-all duration-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '1000ms' }}>
+              <Badge className="bg-gradient-to-r from-emerald-900/30 to-blue-900/30 text-emerald-300 border border-emerald-500/30 px-4 py-2 text-sm">
+                3 Free Resumes / Month • No Credit Card Required
+              </Badge>
             </div>
 
             {/* Floating Particles Animation */}
@@ -387,30 +388,41 @@ export default function HomePage() {
             <p className="text-lg text-slate-400 text-center mb-12 max-w-2xl mx-auto">
               Start free and upgrade when you're ready. No hidden fees, no surprises.
             </p>
-            <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto px-8">
               {/* Free Tier */}
-              <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-800 hover:border-gray-700 transition-all duration-300 hover:shadow-xl hover:shadow-white/5 hover:scale-[1.02] relative overflow-hidden">
+              <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-800 hover:border-gray-700 transition-all duration-300 hover:shadow-xl hover:shadow-white/5 hover:scale-[1.02] relative overflow-hidden flex flex-col">
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-800/20 to-transparent pointer-events-none"></div>
                 <CardHeader className="relative z-10">
                   <CardTitle className="text-2xl text-white mb-2">Free</CardTitle>
                   <div className="text-3xl font-bold text-white">$0<span className="text-lg font-normal text-gray-400">/month</span></div>
                 </CardHeader>
-                <CardContent className="relative z-10 space-y-4">
-                  <div className="space-y-3">
+                <CardContent className="relative z-10 space-y-4 flex-1 flex flex-col">
+                  <div className="space-y-3 flex-1">
                     {[
-                      "3 resume optimizations",
-                      "AI-powered improvements",
-                      "Basic templates",
-                      "PDF export",
-                      "ATS compatibility check"
+                      { text: "3 resume optimizations", included: true },
+                      { text: "AI-powered improvements", included: true },
+                      { text: "Basic templates", included: true },
+                      { text: "PDF export", included: true },
+                      { text: "ATS compatibility check", included: true },
+                      { text: "Cover letter generation", included: false },
+                      { text: "LinkedIn optimization tips", included: false },
+                      { text: "24/7 priority support", included: false }
                     ].map((feature, index) => (
                       <div key={index} className="flex items-center gap-3">
-                        <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                        <span className="text-gray-300">{feature}</span>
+                        {feature.included ? (
+                          <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                        ) : (
+                          <div className="w-5 h-5 text-gray-600 flex-shrink-0 flex items-center justify-center">
+                            <span className="text-lg leading-none">×</span>
+                          </div>
+                        )}
+                        <span className={feature.included ? "text-gray-300" : "text-gray-600 line-through"}>
+                          {feature.text}
+                        </span>
                       </div>
                     ))}
                   </div>
-                  <Link href="/auth/signin" className="block">
+                  <Link href="/auth/signin" className="block mt-auto">
                     <Button className="w-full bg-white/10 text-white hover:bg-white/20 border border-gray-700 hover:border-gray-600">
                       Get Started Free
                     </Button>
@@ -419,8 +431,8 @@ export default function HomePage() {
               </Card>
 
               {/* Pro Tier */}
-              <Card className="bg-gradient-to-br from-gray-900 to-gray-800 backdrop-blur-xl border-emerald-800/50 hover:border-emerald-700/50 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10 hover:scale-[1.02] relative overflow-hidden">
-                <div className="absolute -top-2 -right-2 bg-emerald-500 text-black text-xs font-bold px-3 py-1 rounded-bl-lg">POPULAR</div>
+              <Card className="bg-gradient-to-br from-gray-900 to-gray-800 backdrop-blur-xl border-emerald-800/50 hover:border-emerald-700/50 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10 hover:scale-[1.02] relative overflow-hidden flex flex-col">
+                <div className="absolute top-0 right-4 bg-emerald-500 text-black text-xs font-bold px-3 py-1 rounded-b-lg">POPULAR</div>
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/20 to-transparent pointer-events-none"></div>
                 <CardHeader className="relative z-10">
                   <CardTitle className="text-2xl text-white mb-2">Pro</CardTitle>
@@ -444,7 +456,7 @@ export default function HomePage() {
                       </div>
                     ))}
                   </div>
-                  <Button className="w-full bg-emerald-600 text-white hover:bg-emerald-500 border-0 hover:shadow-lg hover:shadow-emerald-500/25">
+                  <Button className="w-full bg-emerald-600 text-white hover:bg-emerald-500 border-0 hover:shadow-lg hover:shadow-emerald-500/25 mt-auto">
                     Upgrade to Pro
                   </Button>
                 </CardContent>
@@ -463,16 +475,16 @@ export default function HomePage() {
             <div className="space-y-8 max-w-5xl mx-auto">
               {[
                 {
-                  before: "Responsible for managing team projects",
-                  after: "Led cross-functional team of 8, delivering 12 projects on time and 15% under budget"
+                  before: "Handled customer complaints and resolved issues",
+                  after: "Resolved 150+ customer escalations monthly, achieving 96% satisfaction rating and reducing churn by 23%"
                 },
                 {
-                  before: "Helped increase sales",
-                  after: "Drove 34% YoY revenue growth through strategic account expansion and pipeline optimization"
+                  before: "Built websites for clients using modern technologies",
+                  after: "Architected and delivered 14 client web applications using React and Node.js, generating $2.1M in combined client revenue"
                 },
                 {
-                  before: "Worked on improving customer satisfaction",
-                  after: "Elevated customer satisfaction scores by 28% through implementation of data-driven feedback systems"
+                  before: "Managed social media accounts for the company",
+                  after: "Grew company social presence from 2K to 47K followers across 3 platforms, driving 340% increase in organic lead generation"
                 }
               ].map((example, index) => (
                 <div key={index} className="grid md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
