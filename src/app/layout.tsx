@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     siteName: 'ReWork',
     images: [
       {
-        url: '/rework-logo-simple-cropped.png',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: 'ReWork - AI-Powered Resume Optimization',
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'ReWork - AI-Powered Resume Optimization',
     description: 'Transform your resume for any job in seconds. AI-powered optimization that tailors your experience to match job descriptions perfectly.',
-    images: ['/rework-logo-simple-cropped.png'],
+    images: ['/og-image.png'],
     creator: '@rework_app',
   },
   robots: {

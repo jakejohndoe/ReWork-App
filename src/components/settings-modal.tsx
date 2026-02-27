@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -32,14 +34,76 @@ interface SettingsModalProps {
 type TabType = 'account' | 'notifications' | 'privacy' | 'billing'
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const { data: session } = useSession()
+  const { data: session, update } = useSession()
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabType>('account')
   const [emailNotifications, setEmailNotifications] = useState(true)
   const [autoOptimization, setAutoOptimization] = useState(false)
   const [dataRetention, setDataRetention] = useState(true)
+  const [isUpgrading, setIsUpgrading] = useState(false)
+  const [isManagingSubscription, setIsManagingSubscription] = useState(false)
   // Avatar state removed - now handled by AvatarColorPicker component
 
-  const isPremium = session?.user?.plan === "PREMIUM"
+  const isPro = session?.user?.plan === "PREMIUM"
+
+  const handleUpgrade = async () => {
+    try {
+      setIsUpgrading(true)
+      const response = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session')
+      }
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url
+    } catch (error) {
+      console.error('Error upgrading:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to upgrade')
+    } finally {
+      setIsUpgrading(false)
+    }
+  }
+
+  const handleManageSubscription = async () => {
+    try {
+      setIsManagingSubscription(true)
+      const response = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create portal session')
+      }
+
+      // Redirect to Stripe Customer Portal
+      window.location.href = data.url
+    } catch (error) {
+      console.error('Error managing subscription:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to open subscription management')
+    } finally {
+      setIsManagingSubscription(false)
+    }
+  }
+
+  // Check for upgrade success
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('upgraded') === 'true') {
+      toast.success('Welcome to Pro! You now have unlimited resumes.')
+      update() // Refresh session data
+      // Clean up URL
+      router.replace('/dashboard')
+    }
+  }, [router, update])
 
   // Avatar color is now handled by the AvatarColorPicker component
 
@@ -80,10 +144,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <Label className="text-slate-300 text-sm">Plan Status</Label>
                   <div className="flex items-center gap-3 mt-2">
                     <Badge
-                      variant={isPremium ? "default" : "secondary"}
+                      variant={isPro ? "default" : "secondary"}
                       className="text-sm"
                     >
-                      {isPremium ? (
+                      {isPro ? (
                         <>
                           <Crown className="w-3 h-3 mr-1" />
                           Pro Plan
@@ -220,7 +284,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <div className="p-4 bg-slate-800/30 border border-white/10 rounded-lg">
                 <p className="text-sm text-slate-400 mb-1">This Month</p>
                 <p className="text-2xl font-bold text-white">
-                  {session?.user?.monthlyResumesCreated || session?.user?.resumesCreated || 0} / {isPremium ? '∞' : '3'}
+                  {session?.user?.monthlyResumesCreated || session?.user?.resumesCreated || 0} / {isPro ? '∞' : '3'}
                 </p>
               </div>
               <div className="p-4 bg-slate-800/30 border border-white/10 rounded-lg">
@@ -229,12 +293,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             </div>
 
-            {!isPremium && (
-              <div className="p-6 bg-gradient-to-br from-purple-900/30 to-blue-900/20 border border-purple-400/30 rounded-lg">
+            {!isPro && (
+              <div className="p-6 bg-gradient-to-br from-emerald-900/30 to-slate-900/20 border border-emerald-400/30 rounded-lg">
                 <div className="flex items-center gap-2 mb-4">
-                  <Crown className="w-5 h-5 text-purple-400" />
+                  <Crown className="w-5 h-5 text-emerald-400" />
                   <span className="text-lg font-semibold text-white">Upgrade to Pro</span>
-                  <Sparkles className="w-4 h-4 text-cyan-400" />
+                  <Sparkles className="w-4 h-4 text-emerald-400" />
                 </div>
 
                 <div className="grid grid-cols-1 gap-2 mb-4 text-sm">
@@ -246,27 +310,39 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     "Export to multiple formats"
                   ].map((feature, index) => (
                     <div key={index} className="flex items-center gap-2 text-slate-300">
-                      <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
+                      <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                       <span>{feature}</span>
                     </div>
                   ))}
                 </div>
 
-                <Button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white">
-                  Upgrade Now - $2.99/month
+                <Button
+                  onClick={handleUpgrade}
+                  disabled={isUpgrading}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white"
+                >
+                  {isUpgrading ? "Redirecting..." : "Upgrade Now - $3/month"}
                 </Button>
               </div>
             )}
 
-            {isPremium && (
-              <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+            {isPro && (
+              <div className="p-4 bg-emerald-900/20 border border-emerald-500/30 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
-                  <Crown className="w-4 h-4 text-green-400" />
-                  <span className="font-medium text-green-400">Pro Plan Active</span>
+                  <Crown className="w-4 h-4 text-emerald-400" />
+                  <span className="font-medium text-emerald-400">Pro Plan Active</span>
                 </div>
-                <p className="text-sm text-slate-400 mb-3">Next billing date: March 1, 2024</p>
-                <Button variant="outline" size="sm" className="border-green-500/30 text-green-400 hover:bg-green-500/10">
-                  Manage Subscription
+                <p className="text-sm text-slate-400 mb-3">
+                  Pro plan active - manage billing through customer portal
+                </p>
+                <Button
+                  onClick={handleManageSubscription}
+                  disabled={isManagingSubscription}
+                  variant="outline"
+                  size="sm"
+                  className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+                >
+                  {isManagingSubscription ? "Loading..." : "Manage Subscription"}
                 </Button>
               </div>
             )}

@@ -52,6 +52,10 @@ model User {
   emailVerified          DateTime?
   image                  String?
   plan                   Plan             @default(FREE)
+  stripeCustomerId       String?          @unique
+  stripeSubscriptionId   String?          @unique
+  stripePriceId          String?
+  stripeCurrentPeriodEnd DateTime?
   resumesCreated         Int              @default(0)
   totalResumesCreated    Int              @default(0)
   monthlyResumesCreated  Int              @default(0)

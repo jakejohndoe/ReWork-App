@@ -108,8 +108,8 @@ export default function HomePage() {
                 <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 group-hover:scale-105 transition-transform duration-300">ReWork</span>
               </Link>
 
-              {/* Navigation Links - moved to the right */}
-              <div className="flex items-center space-x-6">
+              {/* Navigation Links - responsive */}
+              <div className="hidden md:flex items-center space-x-6">
                 <a
                   href="#how-it-works"
                   className="text-gray-300 hover:text-white transition-colors duration-200 font-medium"
@@ -140,12 +140,24 @@ export default function HomePage() {
                   </Button>
                 </Link>
               </div>
+
+              {/* Mobile Navigation */}
+              <div className="md:hidden">
+                <Link href="/auth/signin">
+                  <Button
+                    size="sm"
+                    className="bg-emerald-500 text-white hover:bg-emerald-400 border-0 transition-all duration-300 font-semibold"
+                  >
+                    Get Started
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </header>
 
         {/* Main Hero and Content */}
-        <main className="container mx-auto px-4 py-24">
+        <main className="container mx-auto px-4 py-12 md:py-24">
           {/* Revolutionary Hero Section */}
           <div ref={heroRef} className="text-center mb-20 relative">
             {/* Ultra-Premium AI Badge */}
@@ -161,7 +173,7 @@ export default function HomePage() {
             </div>
 
             {/* Revolutionary Animated Title */}
-            <h1 className="text-6xl md:text-8xl font-bold mb-10 leading-tight tracking-tight relative overflow-visible">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold mb-10 leading-tight tracking-tight relative overflow-visible">
               <div
                 className={`transition-all duration-1000 delay-200 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               >
@@ -259,7 +271,7 @@ export default function HomePage() {
           </div>
 
           {/* Why It Works - 3 Premium Feature Cards */}
-          <div className="grid md:grid-cols-3 gap-8 mb-24">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-24">
             <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-800 hover:border-gray-700 hover:shadow-2xl hover:shadow-white/5 transition-all duration-500 hover:scale-[1.02] group relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <CardHeader className="relative z-10">
@@ -305,7 +317,7 @@ export default function HomePage() {
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-white">
               Three Steps to Your Perfect Resume
             </h2>
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
               {[
                 { icon: Upload, title: "Upload", description: "Drop your existing resume or start from scratch" },
                 { icon: Sparkles, title: "Optimize", description: "AI enhances content and matches job requirements" },
@@ -323,7 +335,7 @@ export default function HomePage() {
           </div>
 
           {/* Ultra-Modern Feature Grid */}
-          <div className="grid md:grid-cols-2 gap-8 mb-24">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-24">
             <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-800 hover:border-gray-700 transition-all duration-300 hover:shadow-xl hover:shadow-white/5 hover:scale-[1.02] relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-transparent pointer-events-none"></div>
               <CardHeader className="relative z-10">
@@ -392,7 +404,7 @@ export default function HomePage() {
             <p className="text-lg text-slate-400 text-center mb-12 max-w-2xl mx-auto">
               Start free and upgrade when you're ready. No hidden fees, no surprises.
             </p>
-            <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto px-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 max-w-6xl mx-auto px-4 md:px-8">
               {/* Free Tier */}
               <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-800 hover:border-gray-700 transition-all duration-300 hover:shadow-xl hover:shadow-white/5 hover:scale-[1.02] relative overflow-hidden flex flex-col">
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-800/20 to-transparent pointer-events-none"></div>
@@ -491,7 +503,7 @@ export default function HomePage() {
                   after: "Grew company social presence from 2K to 47K followers across 3 platforms, driving 340% increase in organic lead generation"
                 }
               ].map((example, index) => (
-                <div key={index} className="grid md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
+                <div key={index} className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
                   <Card className="bg-gray-900/50 backdrop-blur-xl border-red-900/30 hover:border-red-800/50 transition-all duration-300 p-6">
                     <div className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-2">Before</div>
                     <p className="text-gray-300">{example.before}</p>
@@ -514,9 +526,31 @@ export default function HomePage() {
         {/* Ultra-Modern Footer */}
         <footer className="border-t border-white/10 backdrop-blur-xl bg-slate-900/30 mt-24 hover:border-white/20 transition-colors duration-500">
           <div className="container mx-auto px-4 py-12 text-center">
-            <p className="text-slate-400 hover:text-slate-300 transition-colors duration-300 cursor-default">
+            <p className="text-slate-400 hover:text-slate-300 transition-colors duration-300 cursor-default mb-4">
               © 2026 ReWork • Professional Resume Optimization Platform
             </p>
+            <div className="flex justify-center items-center gap-6 text-sm">
+              <Link
+                href="/terms"
+                className="text-slate-400 hover:text-white transition-colors duration-300"
+              >
+                Terms of Service
+              </Link>
+              <div className="w-px h-4 bg-white/20"></div>
+              <Link
+                href="/privacy"
+                className="text-slate-400 hover:text-white transition-colors duration-300"
+              >
+                Privacy Policy
+              </Link>
+              <div className="w-px h-4 bg-white/20"></div>
+              <a
+                href="mailto:support@rework.solutions"
+                className="text-slate-400 hover:text-white transition-colors duration-300"
+              >
+                Contact
+              </a>
+            </div>
           </div>
         </footer>
       </div>

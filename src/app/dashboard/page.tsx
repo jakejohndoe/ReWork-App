@@ -223,7 +223,7 @@ export default function DashboardPage() {
 
       {/* Main Split Layout */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
-        <div className="grid lg:grid-cols-[340px_1fr] gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 lg:gap-8">
 
           {/* LEFT COLUMN - Source Resumes */}
           <div className="space-y-6">
@@ -403,7 +403,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               /* Tailored Resume Cards */
-              <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {jobApplications.map((app) => (
                   <div
                     key={app.id}
