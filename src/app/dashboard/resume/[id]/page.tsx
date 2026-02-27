@@ -236,7 +236,7 @@ export default function UnifiedEditorPage() {
 
   // View states
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit')
-  const [rightPanelMode, setRightPanelMode] = useState<'preview' | 'job'>('preview')
+  const [rightPanelMode, setRightPanelMode] = useState<'preview' | 'job' | 'results'>('preview')
   const [isJobPanelOpen, setIsJobPanelOpen] = useState(true)
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>('classic')
 
@@ -244,6 +244,12 @@ export default function UnifiedEditorPage() {
   const [resumeTitle, setResumeTitle] = useState<string>('')
   const [resumeData, setResumeData] = useState<StructuredResumeData | null>(null)
   const [originalContent, setOriginalContent] = useState<StructuredResumeData | null>(null)
+  const [showOriginalInResults, setShowOriginalInResults] = useState(false)
+  const [tailoringResults, setTailoringResults] = useState<{
+    jobTitle: string
+    company: string
+    tailoredAt: string
+  } | null>(null)
   const [tailoredJobCompany, setTailoredJobCompany] = useState<string | null>(null)
   const [tailoredJobTitle, setTailoredJobTitle] = useState<string | null>(null)
 
@@ -410,6 +416,19 @@ export default function UnifiedEditorPage() {
     }
   }, [jobTitle, companyName, jobLocation, jobDescription, jobUrl, resumeId])
 
+  // Reset tailored status when job description significantly changes
+  useEffect(() => {
+    if (tailoredJobCompany && tailoredJobTitle) {
+      // Check if the job details have changed
+      if (companyName !== tailoredJobCompany || jobTitle !== tailoredJobTitle) {
+        // Different job - clear the tailored status to allow re-tailoring
+        setTailoredJobCompany(null)
+        setTailoredJobTitle(null)
+        setTailoringResults(null)
+      }
+    }
+  }, [jobTitle, companyName, tailoredJobCompany, tailoredJobTitle])
+
   // Handle job URL parsing with improved feedback
   const handleUrlParse = async () => {
     if (!jobUrl.trim()) {
@@ -473,6 +492,12 @@ export default function UnifiedEditorPage() {
     if (!jobTitle || !companyName || !jobDescription) {
       toast.error('Please fill in job details first')
       return
+    }
+
+    // Check if already tailored for this job
+    if (tailoredJobCompany === companyName && tailoredJobTitle === jobTitle) {
+      const confirmed = confirm('This resume is already tailored for this job. Re-tailoring will use your monthly limit. Continue?')
+      if (!confirmed) return
     }
 
     // Check if resume has content
@@ -593,9 +618,17 @@ export default function UnifiedEditorPage() {
         // Save the tailored version
         await saveResume(false) // Don't show save toast to avoid double notifications
 
-        // Show success and switch to preview
-        toast.success('Resume tailored successfully! Review your optimized resume.')
-        setRightPanelMode('preview') // Auto-switch to preview to show the result
+        // Set tailoring results and switch to results view
+        setTailoringResults({
+          jobTitle,
+          company: companyName,
+          tailoredAt: new Date().toISOString()
+        })
+        setShowOriginalInResults(false) // Default to showing tailored version
+
+        // Show success and switch to results view
+        toast.success('Resume tailored successfully!')
+        setRightPanelMode('results') // Show the results view with before/after toggle
       } else {
         // Fallback error handling
         const errorMsg = data.error || data.message || 'Failed to tailor resume';
@@ -625,6 +658,8 @@ export default function UnifiedEditorPage() {
     setTailoredJobCompany(null)
     setTailoredJobTitle(null)
     setOriginalContent(null)
+    setTailoringResults(null)
+    setRightPanelMode('preview')
 
     // Save the restored version
     await saveResume()
@@ -944,6 +979,19 @@ export default function UnifiedEditorPage() {
                     <Briefcase className="w-3 h-3 inline mr-1.5" />
                     Target Job
                   </button>
+                  {tailoringResults && (
+                    <button
+                      onClick={() => setRightPanelMode('results')}
+                      className={`flex-1 px-3 py-1.5 text-[12px] font-medium rounded transition-all ${
+                        rightPanelMode === 'results'
+                          ? 'bg-white text-slate-900 shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Check className="w-3 h-3 inline mr-1.5" />
+                      Results
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -967,6 +1015,116 @@ export default function UnifiedEditorPage() {
                       />
                     </div>
                   </div>
+                </div>
+              ) : rightPanelMode === 'results' ? (
+                /* Results View */
+                <div className="flex-1 overflow-y-auto p-6">
+                  {/* Success Header */}
+                  <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-emerald-400 mt-0.5" />
+                      <div>
+                        <h3 className="text-[14px] font-semibold text-white mb-1">
+                          Resume Optimized!
+                        </h3>
+                        <p className="text-[12px] text-slate-400">
+                          Tailored for {tailoringResults?.jobTitle} at {tailoringResults?.company}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Before/After Toggle */}
+                  <div className="mb-6">
+                    <div className="flex bg-slate-800/50 border border-white/10 rounded-md p-0.5">
+                      <button
+                        onClick={() => setShowOriginalInResults(false)}
+                        className={`flex-1 px-4 py-2 text-[13px] font-medium rounded transition-all ${
+                          !showOriginalInResults
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <Sparkles className="w-4 h-4 inline mr-2" />
+                        Tailored Version
+                      </button>
+                      <button
+                        onClick={() => setShowOriginalInResults(true)}
+                        className={`flex-1 px-4 py-2 text-[13px] font-medium rounded transition-all ${
+                          showOriginalInResults
+                            ? 'bg-slate-700 text-white'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <FileText className="w-4 h-4 inline mr-2" />
+                        Original
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Resume Preview */}
+                  <div className="mb-6">
+                    <div className="bg-white rounded-lg shadow-2xl overflow-hidden" style={{ maxHeight: 'calc(100vh - 400px)' }}>
+                      <div className="overflow-y-auto">
+                        <ResumePreview
+                          resumeData={showOriginalInResults && originalContent ? originalContent : resumeData}
+                          template={selectedTemplate}
+                          accentColor={selectedTemplate === 'classic' ? '#1e40af' : selectedTemplate === 'modern' ? '#7c3aed' : '#dc2626'}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Template Selector */}
+                  <div className="mb-6">
+                    <TemplateSelector
+                      selectedTemplate={selectedTemplate}
+                      onTemplateChange={setSelectedTemplate}
+                      className=""
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={async () => {
+                        // Download the tailored PDF
+                        const element = document.createElement('a');
+                        element.href = `/api/resumes/${resumeId}/download`;
+                        element.download = `${resumeData?.contactInfo?.firstName}_${resumeData?.contactInfo?.lastName}_Resume_${tailoringResults?.company}.pdf`.replace(/\s+/g, '_');
+                        document.body.appendChild(element);
+                        element.click();
+                        document.body.removeChild(element);
+                        toast.success('Downloading tailored resume...');
+                      }}
+                      className="py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-900 rounded-md inline-flex items-center justify-center gap-2 text-[13px] font-semibold transition-all"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download PDF
+                    </button>
+                    <button
+                      onClick={() => {
+                        setRightPanelMode('preview');
+                        setTailoringResults(null);
+                        toast.info('You can continue editing your tailored resume');
+                      }}
+                      className="py-2.5 bg-slate-700 hover:bg-slate-600 border border-white/10 text-white rounded-md inline-flex items-center justify-center gap-2 text-[13px] font-medium transition-all"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      Keep Editing
+                    </button>
+                  </div>
+
+                  {/* Restore Original Button */}
+                  {originalContent && (
+                    <button
+                      onClick={handleUndoTailoring}
+                      className="w-full mt-3 py-2 text-[12px] text-slate-400 hover:text-red-400 transition-all flex items-center justify-center gap-2"
+                    >
+                      <Undo2 className="w-3 h-3" />
+                      Restore Original Resume
+                    </button>
+                  )}
                 </div>
               ) : (
                 /* Job Description Panel */
@@ -1130,7 +1288,11 @@ export default function UnifiedEditorPage() {
                   <button
                     onClick={handleTailorResume}
                     disabled={isTailoring || !jobTitle || !companyName || !jobDescription}
-                    className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-900 rounded-md inline-flex items-center justify-center gap-2 text-[13px] font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+                    className={`w-full py-2.5 rounded-md inline-flex items-center justify-center gap-2 text-[13px] font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden ${
+                      tailoredJobCompany === companyName && tailoredJobTitle === jobTitle
+                        ? 'bg-emerald-500/30 hover:bg-emerald-500/40 text-emerald-400 border border-emerald-500/30'
+                        : 'bg-emerald-500 hover:bg-emerald-400 text-slate-900'
+                    }`}
                   >
                     {isTailoring ? (
                       <>
@@ -1140,7 +1302,7 @@ export default function UnifiedEditorPage() {
                     ) : tailoredJobCompany === companyName && tailoredJobTitle === jobTitle ? (
                       <>
                         <Check className="w-4 h-4" />
-                        Resume Tailored
+                        ✓ Resume Tailored
                       </>
                     ) : (
                       <>
