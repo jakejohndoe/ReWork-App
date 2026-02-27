@@ -10,10 +10,10 @@ interface TailoringStep {
 
 const TAILORING_STEPS: TailoringStep[] = [
   { id: 1, text: "Reading your resume...", appearAfter: 0, icon: "📄" },
-  { id: 2, text: "Analyzing job requirements...", appearAfter: 2000, icon: "🎯" },
-  { id: 3, text: "Optimizing your experience...", appearAfter: 4000, icon: "🔄" },
-  { id: 4, text: "Polishing final details...", appearAfter: 6000, icon: "✨" },
-  { id: 5, text: "Almost there...", appearAfter: 8000, icon: "🚀" }
+  { id: 2, text: "Analyzing job requirements...", appearAfter: 1200, icon: "🎯" },
+  { id: 3, text: "Optimizing your experience...", appearAfter: 2800, icon: "🔄" },
+  { id: 4, text: "Polishing final details...", appearAfter: 4500, icon: "✨" },
+  { id: 5, text: "Almost there...", appearAfter: 6000, icon: "🚀" }
 ]
 
 interface TailoringProgressProps {
@@ -42,7 +42,7 @@ export default function TailoringProgress({
     // Reset state when starting
     setVisibleSteps([1])
     setCompletedSteps([])
-    setProgressPercent(10)
+    setProgressPercent(15)
 
     // Set up timers for step progression
     const timers: NodeJS.Timeout[] = []
@@ -68,8 +68,9 @@ export default function TailoringProgress({
           })
         }
 
-        // Update progress
-        setProgressPercent(Math.min(20 * step.id, 90))
+        // Update progress with more dynamic increments
+        const progressValues = [15, 30, 55, 80, 95];
+        setProgressPercent(progressValues[step.id - 1] || 95)
       }, step.appearAfter)
 
       timers.push(timer)

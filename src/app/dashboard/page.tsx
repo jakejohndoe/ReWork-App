@@ -17,7 +17,8 @@ import {
   Download,
   Briefcase,
   Zap,
-  Upload
+  Upload,
+  Sparkles
 } from "lucide-react"
 
 interface Resume {
@@ -35,7 +36,7 @@ interface JobApplication {
   company: string
   matchScore?: number
   createdAt: string
-  resume: {
+  resume?: {
     id: string
     title: string
   }
@@ -50,7 +51,7 @@ export default function DashboardPage() {
   }, [])
 
   // Loading state management
-  const [shouldShowContent, setShouldShowContent] = useState(false)
+  const [shouldShowLoader, setShouldShowLoader] = useState(false)
   const [isDataLoaded, setIsDataLoaded] = useState(false)
 
   const [isUploadOpen, setIsUploadOpen] = useState(false)
@@ -58,11 +59,15 @@ export default function DashboardPage() {
   const [jobApplications, setJobApplications] = useState<JobApplication[]>([])
   const [deletingResumeId, setDeletingResumeId] = useState<string | null>(null)
 
-  // Show content as soon as data is loaded
+  // Only show loader if data takes more than 500ms to load
   useEffect(() => {
-    if (isDataLoaded) {
-      setShouldShowContent(true)
-    }
+    const timer = setTimeout(() => {
+      if (!isDataLoaded) {
+        setShouldShowLoader(true)
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
   }, [isDataLoaded])
 
   // Main data loading effect
@@ -103,14 +108,19 @@ export default function DashboardPage() {
     fetchData()
   }, [status, session])
 
-  // Show loader while loading
-  if (!shouldShowContent) {
-    return <ResumeLoader />
-  }
-
   // Redirect if not authenticated
   if (status === "unauthenticated") {
     redirect("/auth/signin")
+  }
+
+  // Show loader only if it's taking a while
+  if (shouldShowLoader && !isDataLoaded) {
+    return <ResumeLoader />
+  }
+
+  // Don't render content until data is loaded (but without loader for first 500ms)
+  if (!isDataLoaded) {
+    return null
   }
 
   const handleUploadComplete = (resumes: any[]) => {
@@ -181,7 +191,7 @@ export default function DashboardPage() {
   const resumeCount = resumes.length
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-black">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-black bg-dots-sm">
       {/* Enhanced Navigation with Plan Info */}
       <Navigation>
         <div className="flex items-center space-x-4 ml-auto">
@@ -263,9 +273,21 @@ export default function DashboardPage() {
                         <FileText className="w-4 h-4 text-slate-400" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-medium text-slate-200 truncate group-hover:text-white transition-colors">
-                          {resume.originalFileName || resume.title}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-medium text-slate-200 truncate group-hover:text-white transition-colors">
+                            {resume.originalFileName || resume.title}
+                          </h3>
+                          {/* Tailored Badge */}
+                          {jobApplications.filter(app => app.resume?.id === resume.id).length > 0 && (
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
+                            >
+                              <Sparkles className="w-2.5 h-2.5 mr-1" />
+                              Tailored
+                            </Badge>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
                           <span>{formatTimeAgo(resume.updatedAt)}</span>
                           {resume.fileSize && (
@@ -274,6 +296,18 @@ export default function DashboardPage() {
                               <span>{formatFileSize(resume.fileSize)}</span>
                             </>
                           )}
+                          {/* Show tailoring count if tailored */}
+                          {(() => {
+                            const tailoringCount = jobApplications.filter(app => app.resume?.id === resume.id).length;
+                            return tailoringCount > 0 && (
+                              <>
+                                <span>•</span>
+                                <span className="text-emerald-400">
+                                  {tailoringCount} tailoring{tailoringCount > 1 ? 's' : ''}
+                                </span>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                       <button
@@ -342,7 +376,7 @@ export default function DashboardPage() {
 
                 {resumes.length > 0 ? (
                   <div className="space-y-3">
-                    <Link href={`/dashboard/resume/${resumes[resumes.length - 1].id}`}>
+                    <Link href={`/dashboard/resume/${resumes[resumes.length - 1].id}?tab=job`}>
                       <button className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors flex items-center gap-2 mx-auto">
                         <Zap className="w-4 h-4" />
                         Start Tailoring
@@ -401,7 +435,7 @@ export default function DashboardPage() {
                         {app.company}
                       </p>
                       <p className="text-xs text-slate-500 mb-3">
-                        From: {app.resume.title}
+                        From: {app.resume?.title || 'Unknown Resume'}
                       </p>
                       <p className="text-xs text-slate-500 mb-4">
                         {formatTimeAgo(app.createdAt)}
@@ -409,15 +443,17 @@ export default function DashboardPage() {
 
                       {/* Actions */}
                       <div className="flex gap-2">
-                        <Link
-                          href={`/dashboard/resume/${app.resume.id}?application=${app.id}`}
-                          className="flex-1"
-                        >
+                        {app.resume?.id && (
+                          <Link
+                            href={`/dashboard/resume/${app.resume.id}?application=${app.id}`}
+                            className="flex-1"
+                          >
                           <button className="w-full px-3 py-2 bg-slate-700 hover:bg-slate-600 border border-white/10 hover:border-white/20 rounded-md text-xs font-medium text-white transition-all flex items-center justify-center gap-1">
                             <Edit className="w-3 h-3" />
                             Edit
                           </button>
                         </Link>
+                        )}
                         <button className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-xs font-medium transition-colors flex items-center gap-1">
                           <Download className="w-3 h-3" />
                           Download

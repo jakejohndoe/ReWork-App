@@ -419,17 +419,57 @@ Focus on creating a compelling narrative that shows why this candidate is perfec
 
     console.log('💾 Resume updated with tailored content');
 
-    // Also update the job application if it exists
-    await prisma.jobApplication.updateMany({
+    // Create or update job application
+    const existingApplication = await prisma.jobApplication.findFirst({
       where: {
         resumeId: resumeId,
         jobTitle: jobTitle,
-        company: actualCompanyName
-      },
-      data: {
-        optimizedContent: tailoredContent
+        company: actualCompanyName,
+        userId: resume.userId
       }
     });
+
+    if (existingApplication) {
+      // Update existing application
+      await prisma.jobApplication.update({
+        where: { id: existingApplication.id },
+        data: {
+          optimizedContent: tailoredContent,
+          optimizedStructured: frontendResume,
+          jobDescription: actualJobDescription,
+          status: 'OPTIMIZED',
+          lastAnalyzed: new Date()
+        }
+      });
+      console.log('📝 Updated existing job application');
+    } else {
+      // Create new job application
+      await prisma.jobApplication.create({
+        data: {
+          userId: resume.userId,
+          resumeId: resumeId,
+          jobTitle: jobTitle,
+          company: actualCompanyName,
+          jobDescription: actualJobDescription,
+          optimizedContent: tailoredContent,
+          optimizedStructured: frontendResume,
+          status: 'OPTIMIZED',
+          lastAnalyzed: new Date()
+        }
+      });
+      console.log('📝 Created new job application');
+
+      // Increment the user's monthly resume count (only for new tailoring)
+      await prisma.user.update({
+        where: { id: resume.userId },
+        data: {
+          monthlyResumesCreated: { increment: 1 },
+          totalResumesCreated: { increment: 1 },
+          resumesCreated: { increment: 1 }
+        }
+      });
+      console.log('📊 Incremented user resume count');
+    }
 
     return NextResponse.json({
       success: true,

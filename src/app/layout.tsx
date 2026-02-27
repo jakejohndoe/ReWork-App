@@ -7,9 +7,55 @@ import { Toaster } from 'sonner'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'ReWork - Resume App',
-  description: 'AI-powered resume optimization for job-specific applications. Upload, optimize, and download tailored resumes in seconds.',
-  keywords: 'resume, AI, job application, optimization, career, employment',
+  title: 'ReWork - AI-Powered Resume Optimization',
+  description: 'Transform your resume for any job in seconds. AI-powered optimization that tailors your experience to match job descriptions perfectly.',
+  keywords: 'resume, AI, job application, optimization, career, employment, resume builder, ATS, job search, career tools',
+  authors: [{ name: 'ReWork' }],
+  creator: 'ReWork',
+  publisher: 'ReWork',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://rework.solutions'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'ReWork - AI-Powered Resume Optimization',
+    description: 'Transform your resume for any job in seconds. AI-powered optimization that tailors your experience to match job descriptions perfectly.',
+    url: '/',
+    siteName: 'ReWork',
+    images: [
+      {
+        url: '/rework-logo-simple-cropped.png',
+        width: 1200,
+        height: 630,
+        alt: 'ReWork - AI-Powered Resume Optimization',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ReWork - AI-Powered Resume Optimization',
+    description: 'Transform your resume for any job in seconds. AI-powered optimization that tailors your experience to match job descriptions perfectly.',
+    images: ['/rework-logo-simple-cropped.png'],
+    creator: '@rework_app',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   icons: {
     icon: [
       { url: '/rework-logo-simple-cropped.png', sizes: '64x64', type: 'image/png' },
@@ -36,7 +82,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={inter.className}>
+      <body className={`${inter.className} bg-dots-sm`}>
         <Providers>
           {children}
           <Toaster

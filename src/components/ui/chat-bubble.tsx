@@ -6,6 +6,53 @@ import { MessageCircle, X, Send, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
+interface ChatMessage {
+  id: string
+  text: string
+  isBot: boolean
+  timestamp: Date
+}
+
+interface FAQ {
+  id: string
+  question: string
+  answer: string
+  category: 'general' | 'billing' | 'technical'
+}
+
+const FAQS: FAQ[] = [
+  {
+    id: '1',
+    question: 'How do I upload a resume?',
+    answer: 'Click the "Upload Resume" button on your dashboard, then drag and drop your PDF file or click to browse. We support PDF files up to 10MB.',
+    category: 'general'
+  },
+  {
+    id: '2',
+    question: 'How does AI resume tailoring work?',
+    answer: 'Our AI analyzes your resume and the job description, then optimizes your content to match the role requirements while keeping your authentic experience.',
+    category: 'general'
+  },
+  {
+    id: '3',
+    question: 'What\'s the difference between Free and Premium?',
+    answer: 'Free users can create resumes and tailor them. Premium users get unlimited downloads, priority support, and access to advanced templates.',
+    category: 'billing'
+  },
+  {
+    id: '4',
+    question: 'Can I download my resume as PDF?',
+    answer: 'Yes! Click the download button on any resume. Free users get 5 downloads per month, Premium users get unlimited downloads.',
+    category: 'general'
+  },
+  {
+    id: '5',
+    question: 'Why is my resume upload failing?',
+    answer: 'Make sure your file is a PDF under 10MB. If issues persist, try refreshing the page or clearing your browser cache.',
+    category: 'technical'
+  }
+]
+
 interface ChatBubbleProps {
   className?: string
 }
@@ -14,8 +61,10 @@ export function ChatBubble({ className }: ChatBubbleProps) {
   const { data: session } = useSession()
   const [isOpen, setIsOpen] = useState(false)
   const [message, setMessage] = useState('')
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [hasNotification, setHasNotification] = useState(false)
   const [isFirstOpen, setIsFirstOpen] = useState(true)
+  const [showFAQs, setShowFAQs] = useState(true)
 
   useEffect(() => {
     // Show notification dot on first visit after login
@@ -33,12 +82,51 @@ export function ChatBubble({ className }: ChatBubbleProps) {
     }
   }, [session])
 
+  const addMessage = (text: string, isBot: boolean = false) => {
+    const newMessage: ChatMessage = {
+      id: Date.now().toString(),
+      text,
+      isBot,
+      timestamp: new Date()
+    }
+    setMessages(prev => [...prev, newMessage])
+  }
+
+  const handleFAQClick = (faq: FAQ) => {
+    // Add user question
+    addMessage(faq.question, false)
+    // Add bot answer after a short delay
+    setTimeout(() => {
+      addMessage(faq.answer, true)
+      setShowFAQs(false) // Hide FAQs after first interaction
+    }, 500)
+  }
+
   const handleSendMessage = () => {
     if (message.trim()) {
-      // In a real implementation, this would send the message to your support system
-      console.log('Message sent:', message)
+      addMessage(message, false)
       setMessage('')
-      // You could add a toast notification here
+      setShowFAQs(false) // Hide FAQs after user starts typing
+
+      // Simple auto-response for common phrases
+      setTimeout(() => {
+        const lowerMessage = message.toLowerCase()
+        let response = ''
+
+        if (lowerMessage.includes('help') || lowerMessage.includes('support')) {
+          response = 'I\'m here to help! Check out our FAQ above or describe your specific issue.'
+        } else if (lowerMessage.includes('upload') || lowerMessage.includes('pdf')) {
+          response = 'For upload issues, make sure your file is a PDF under 10MB. Try refreshing if problems persist.'
+        } else if (lowerMessage.includes('download') || lowerMessage.includes('limit')) {
+          response = 'Free users get 5 PDF downloads per month. Upgrade to Premium for unlimited downloads!'
+        } else if (lowerMessage.includes('pricing') || lowerMessage.includes('cost')) {
+          response = 'Premium is just $2.99/month with unlimited downloads and priority support. Great value!'
+        } else {
+          response = 'Thanks for your message! Our team will get back to you soon. Check our FAQ above for instant answers.'
+        }
+
+        addMessage(response, true)
+      }, 1000)
     }
   }
 
@@ -79,32 +167,62 @@ export function ChatBubble({ className }: ChatBubbleProps) {
 
           {/* Messages Area */}
           <div className="flex-1 p-4 space-y-3 h-64 overflow-y-auto">
-            {!isFirstOpen ? (
-              <div className="bg-gradient-to-br from-purple-500/20 to-blue-500/20 p-4 rounded-lg text-sm border border-purple-400/30">
-                <div className="font-medium text-white mb-2 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-purple-400" />
-                  ReWork Support
-                </div>
-                <div className="text-slate-200 mb-3">
-                  Welcome back! You have {session?.user?.resumesCreated || 0} resume{(session?.user?.resumesCreated || 0) !== 1 ? 's' : ''}. Here's what's new in ReWork:
-                </div>
-                <div className="text-sm text-slate-300 space-y-1">
-                  <div>• ✨ New AI optimization engine</div>
-                  <div>• 🎨 Updated dashboard design</div>
-                  <div>• 🚀 Faster PDF processing</div>
-                </div>
+            {/* Welcome message */}
+            <div className="bg-slate-800/50 p-3 rounded-lg text-sm border border-slate-700">
+              <div className="font-medium text-white mb-1 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-cyan-400" />
+                ReWork Support
               </div>
-            ) : (
-              <div className="bg-slate-800/50 p-3 rounded-lg text-sm border border-slate-700">
-                <div className="font-medium text-white mb-1 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-cyan-400" />
-                  ReWork Support
-                </div>
-                <div className="text-slate-300">
-                  Hi! How can we help you today?
-                </div>
+              <div className="text-slate-300">
+                Hi! How can we help you today?
+              </div>
+            </div>
+
+            {/* FAQ Quick Buttons */}
+            {showFAQs && messages.length === 0 && (
+              <div className="space-y-2">
+                <div className="text-xs text-slate-400 font-medium">Quick Help:</div>
+                {FAQS.slice(0, 3).map((faq) => (
+                  <button
+                    key={faq.id}
+                    onClick={() => handleFAQClick(faq)}
+                    className="w-full text-left p-2 bg-slate-800/30 hover:bg-slate-800/50 border border-slate-700 hover:border-slate-600 rounded-md text-xs text-slate-300 transition-all"
+                  >
+                    {faq.question}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setShowFAQs(false)}
+                  className="text-xs text-slate-500 hover:text-slate-400 p-1"
+                >
+                  Show more options →
+                </button>
               </div>
             )}
+
+            {/* Chat Messages */}
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}
+              >
+                <div
+                  className={`max-w-[80%] p-3 rounded-lg text-sm ${
+                    msg.isBot
+                      ? 'bg-slate-800/50 border border-slate-700 text-slate-300'
+                      : 'bg-blue-600 text-white'
+                  }`}
+                >
+                  {msg.isBot && (
+                    <div className="flex items-center gap-2 mb-1">
+                      <Sparkles className="w-3 h-3 text-cyan-400" />
+                      <span className="text-xs font-medium text-slate-400">Support</span>
+                    </div>
+                  )}
+                  {msg.text}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Input Area */}

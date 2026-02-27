@@ -27,6 +27,7 @@ export default function AdminPage() {
   })
 
   useEffect(() => {
+    document.title = "Admin Panel - ReWork"
     if (status === 'loading') return
 
     if (!session) {

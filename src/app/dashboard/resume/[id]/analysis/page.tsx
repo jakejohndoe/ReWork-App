@@ -83,6 +83,11 @@ export default function RedesignedAnalysisPage() {
   const router = useRouter()
   const resumeId = params.id as string
 
+  // Set page title
+  useEffect(() => {
+    document.title = "Resume Analysis - ReWork"
+  }, [])
+
   // Core State
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisResults, setAnalysisResults] = useState<EnhancedAnalysisResult | null>(null)

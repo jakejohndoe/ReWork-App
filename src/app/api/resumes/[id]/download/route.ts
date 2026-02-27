@@ -51,6 +51,44 @@ async function handleDownload(
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
+    // Get user with plan information
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
+
+    if (!user) {
+      return new NextResponse('User not found', { status: 404 });
+    }
+
+    // Check download limits for FREE users
+    if (user.plan === 'FREE') {
+      // Count recent resume activities this month as a proxy for downloads
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const recentActivityCount = await prisma.resume.count({
+        where: {
+          userId: user.id,
+          updatedAt: {
+            gte: startOfMonth
+          }
+        }
+      });
+
+      // FREE users get 5 downloads per month (generous limit)
+      const FREE_DOWNLOAD_LIMIT = 5;
+      if (recentActivityCount >= FREE_DOWNLOAD_LIMIT) {
+        return NextResponse.json({
+          error: 'Download limit reached',
+          message: `Free users can download ${FREE_DOWNLOAD_LIMIT} PDFs per month. Upgrade to Premium for unlimited downloads.`,
+          downloadsUsed: recentActivityCount,
+          downloadLimit: FREE_DOWNLOAD_LIMIT,
+          upgradeRequired: true
+        }, { status: 403 });
+      }
+    }
+
     // Get resume with all structured data
     const resume = await prisma.resume.findFirst({
       where: {
@@ -192,12 +230,20 @@ async function handleDownload(
       throw renderError;
     }
 
+    // Track download activity by updating the resume timestamp
+    await prisma.resume.update({
+      where: { id: resume.id },
+      data: { updatedAt: new Date() }
+    });
+    console.log('📊 Download activity tracked');
+
+
     // Create descriptive filename
     const versionText = isOptimized ? 'optimized' : 'original';
     const templateText = template || 'default';
     const safeTitle = (resume.title || 'resume').replace(/[^a-zA-Z0-9-_]/g, '-');
     const filename = `${safeTitle}-${versionText}-${templateText}-${Date.now()}.pdf`;
-    
+
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': 'application/pdf',

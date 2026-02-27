@@ -62,7 +62,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-black relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-black relative overflow-hidden bg-dots">
       {/* Floating Particles Background - Only render on client */}
       {isMounted && (
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -111,10 +111,10 @@ export default function HomePage() {
               {/* Navigation Links - moved to the right */}
               <div className="flex items-center space-x-6">
                 <a
-                  href="#"
+                  href="#how-it-works"
                   className="text-gray-300 hover:text-white transition-colors duration-200 font-medium"
                 >
-                  Docs
+                  How It Works
                 </a>
                 <a
                   href="#pricing"
@@ -301,7 +301,7 @@ export default function HomePage() {
           </div>
 
           {/* How It Works Section */}
-          <div className="mb-24">
+          <div id="how-it-works" className="mb-24 scroll-mt-20">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-white">
               Three Steps to Your Perfect Resume
             </h2>
@@ -440,7 +440,7 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/20 to-transparent pointer-events-none"></div>
                 <CardHeader className="relative z-10">
                   <CardTitle className="text-2xl text-white mb-2">Pro</CardTitle>
-                  <div className="text-3xl font-bold text-white">$9<span className="text-lg font-normal text-gray-400">/month</span></div>
+                  <div className="text-3xl font-bold text-white">$3<span className="text-lg font-normal text-gray-400">/month</span></div>
                 </CardHeader>
                 <CardContent className="relative z-10 space-y-4">
                   <div className="space-y-3">

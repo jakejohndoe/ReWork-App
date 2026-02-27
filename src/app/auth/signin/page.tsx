@@ -13,6 +13,7 @@ function SignInContent() {
   const [providers, setProviders] = useState<Record<string, { id: string; name: string; type: string }> | null>(null)
 
   useEffect(() => {
+    document.title = "Sign In - ReWork"
     async function loadProviders() {
       const res = await getProviders()
       setProviders(res)
@@ -21,7 +22,7 @@ function SignInContent() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-black relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-black relative overflow-hidden bg-dots-sm">
       {/* Subtle background pattern */}
       <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
 
