@@ -131,7 +131,7 @@ export default function ModernTemplate({
       </aside>
 
       {/* Right Main Content */}
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-8 overflow-hidden">
         {/* Professional Summary */}
         <section className="mb-8">
           <h2 className="text-lg font-bold uppercase tracking-wider mb-4" style={{ color: accentColor }}>
@@ -167,8 +167,8 @@ export default function ModernTemplate({
                   <ul className="space-y-1">
                     {job.achievements.map((achievement, idx) => (
                       <li key={idx} className="text-sm text-gray-700 flex items-start">
-                        <span className="mr-2" style={{ color: accentColor }}>▸</span>
-                        <span className="flex-1">{achievement}</span>
+                        <span className="mr-2 flex-shrink-0" style={{ color: accentColor }}>▸</span>
+                        <span className="flex-1 break-words pr-2">{achievement}</span>
                       </li>
                     ))}
                   </ul>

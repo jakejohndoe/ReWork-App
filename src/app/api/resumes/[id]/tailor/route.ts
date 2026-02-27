@@ -8,8 +8,20 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  console.log('📍 Tailor API: Request received');
+
+  // Check OpenAI API key first
+  if (!process.env.OPENAI_API_KEY) {
+    console.error('❌ OPENAI_API_KEY is not configured');
+    return NextResponse.json({
+      error: 'AI service is not configured. Please contact support.',
+      success: false
+    }, { status: 500 });
+  }
+
   try {
     const session = await getServerSession(authOptions);
+    console.log('📍 Tailor API: Session validated');
 
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -18,7 +30,24 @@ export async function POST(
     const { id } = await params;
     const resumeId = id;
 
-    const { jobTitle, company, companyName, location, description, jobDescription, extraContext, contextTags } = await request.json();
+    let requestData;
+    try {
+      requestData = await request.json();
+      console.log('📍 Tailor API: Request data parsed', {
+        hasJobTitle: !!requestData.jobTitle,
+        hasCompany: !!requestData.company || !!requestData.companyName,
+        hasDescription: !!requestData.description || !!requestData.jobDescription,
+        dataSize: JSON.stringify(requestData).length
+      });
+    } catch (parseError) {
+      console.error('❌ Failed to parse request JSON:', parseError);
+      return NextResponse.json({
+        error: 'Invalid request data',
+        success: false
+      }, { status: 400 });
+    }
+
+    const { jobTitle, company, companyName, location, description, jobDescription, extraContext, contextTags } = requestData;
 
     // Accept both company and companyName for backwards compatibility
     const actualCompanyName = company || companyName;
@@ -74,7 +103,9 @@ export async function POST(
       skills: currentContent.skills || []
     };
 
-    console.log('📝 Creating tailored resume with GPT-4o...');
+    console.log('📝 Creating tailored resume with OpenAI...');
+    console.log('📍 Resume data size:', JSON.stringify(resumeData).length, 'bytes');
+    console.log('📍 Job description size:', actualJobDescription.length, 'characters');
 
     // Create the tailoring prompt
     const contextSection = (extraContext || contextTags?.length) ? `
@@ -176,9 +207,12 @@ Return a JSON object with this exact structure:
 
 Focus on creating a compelling narrative that shows why this candidate is perfect for this role, using only their real experience.`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o", // Using gpt-4o for quality
-      messages: [
+    let completion;
+    try {
+      console.log('📍 Calling OpenAI API with model: gpt-4o-mini');
+      completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini", // Using gpt-4o-mini for better cost/performance
+        messages: [
         {
           role: "system",
           content: "You are a professional resume writer who creates authentic, compelling resumes. You never fabricate information and always maintain the candidate's genuine experience while presenting it in the best possible light."
@@ -190,16 +224,65 @@ Focus on creating a compelling narrative that shows why this candidate is perfec
       ],
       temperature: 0.7, // Natural-sounding language
       max_tokens: 4000,
-    });
+      });
+      console.log('✅ OpenAI API responded successfully');
+    } catch (openaiError: any) {
+      console.error('❌ OpenAI API error:', openaiError);
+      console.error('Error details:', openaiError?.response?.data || openaiError?.message);
+
+      if (openaiError?.status === 401 || openaiError?.message?.includes('401')) {
+        return NextResponse.json({
+          error: 'Invalid AI service credentials. Please contact support.',
+          success: false
+        }, { status: 500 });
+      }
+
+      if (openaiError?.status === 429 || openaiError?.message?.includes('429')) {
+        return NextResponse.json({
+          error: 'AI service is currently busy. Please try again in a moment.',
+          success: false
+        }, { status: 429 });
+      }
+
+      if (openaiError?.message?.includes('token') || openaiError?.message?.includes('context')) {
+        return NextResponse.json({
+          error: 'Resume or job description is too long. Please shorten and try again.',
+          success: false
+        }, { status: 400 });
+      }
+
+      return NextResponse.json({
+        error: 'Failed to generate tailored resume. Please try again.',
+        details: openaiError?.message || 'Unknown OpenAI error',
+        success: false
+      }, { status: 500 });
+    }
 
     const response = completion.choices[0]?.message?.content?.trim();
     if (!response) {
-      throw new Error('Empty response from AI');
+      console.error('❌ Empty response from OpenAI');
+      return NextResponse.json({
+        error: 'AI service returned empty response. Please try again.',
+        success: false
+      }, { status: 500 });
     }
 
+    console.log('📍 OpenAI response size:', response.length, 'characters');
+
     // Parse the AI response
-    const cleanedResponse = response.replace(/```json\n?|\n?```/g, '').trim();
-    const tailoredData = JSON.parse(cleanedResponse);
+    let tailoredData;
+    try {
+      const cleanedResponse = response.replace(/```json\n?|\n?```/g, '').trim();
+      tailoredData = JSON.parse(cleanedResponse);
+      console.log('✅ Tailored data parsed successfully');
+    } catch (parseError: any) {
+      console.error('❌ Failed to parse OpenAI response:', parseError);
+      console.error('Response was:', response.substring(0, 500));
+      return NextResponse.json({
+        error: 'Failed to parse AI response. Please try again.',
+        success: false
+      }, { status: 500 });
+    }
 
     console.log('✅ Tailored resume generated successfully');
 

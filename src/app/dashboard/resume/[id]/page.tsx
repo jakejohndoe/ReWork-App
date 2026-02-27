@@ -179,6 +179,47 @@ function SimpleResumePreview({ resumeData, resumeTitle, className = "" }: { resu
   )
 }
 
+// Helper function to calculate section completion
+function calculateSectionCompletion(section: string, data: any): number {
+  switch (section) {
+    case 'contact':
+      if (!data || typeof data !== 'object') return 0;
+      const contactFields = ['firstName', 'lastName', 'email', 'phone', 'location'];
+      const filledContact = contactFields.filter(field => data[field] && data[field].trim()).length;
+      return Math.round((filledContact / contactFields.length) * 100);
+
+    case 'summary':
+      if (!data || !data.summary) return 0;
+      if (data.summary.length < 50) return 50;
+      if (data.summary.length < 100) return 75;
+      return 100;
+
+    case 'experience':
+      if (!Array.isArray(data) || data.length === 0) return 0;
+      const hasBasicInfo = data.every((exp: any) => exp.role && exp.company);
+      const hasAchievements = data.every((exp: any) => exp.achievements?.length > 0);
+      if (!hasBasicInfo) return 25;
+      if (!hasAchievements) return 60;
+      return 100;
+
+    case 'education':
+      if (!Array.isArray(data) || data.length === 0) return 0;
+      const hasBasicEdu = data.every((edu: any) => edu.degree && edu.school);
+      return hasBasicEdu ? 100 : 50;
+
+    case 'skills':
+      if (!data || typeof data !== 'object') return 0;
+      const totalSkills = Object.values(data).flat().length;
+      if (totalSkills === 0) return 0;
+      if (totalSkills < 5) return 50;
+      if (totalSkills < 10) return 75;
+      return 100;
+
+    default:
+      return 0;
+  }
+}
+
 export default function UnifiedEditorPage() {
   const { data: session, status } = useSession()
   const params = useParams()
@@ -317,7 +358,7 @@ export default function UnifiedEditorPage() {
     }
   }, [resumeData])
 
-  // Handle job URL parsing
+  // Handle job URL parsing with improved feedback
   const handleUrlParse = async () => {
     if (!jobUrl.trim()) {
       toast.error('Please enter a job posting URL')
@@ -335,49 +376,113 @@ export default function UnifiedEditorPage() {
       const result = await response.json()
 
       if (result.success && result.data) {
+        // Count how many fields were actually extracted
+        const extractedFields = {
+          jobTitle: !!result.data.jobTitle,
+          company: !!result.data.company,
+          location: !!result.data.location,
+          jobDescription: !!result.data.jobDescription && result.data.jobDescription.length > 100
+        }
+
+        const fieldsExtracted = Object.values(extractedFields).filter(Boolean).length
+
+        // Set the extracted data
         setJobTitle(result.data.jobTitle || '')
         setCompanyName(result.data.company || '')
         setJobLocation(result.data.location || '')
         setJobDescription(result.data.jobDescription || '')
-        toast.success('Job details extracted successfully')
+
+        // Provide honest feedback based on extraction quality
+        if (fieldsExtracted === 4) {
+          toast.success('Job details extracted successfully!')
+        } else if (fieldsExtracted >= 2) {
+          toast.info(`Found some details (${fieldsExtracted}/4 fields). Please fill in the rest manually.`)
+        } else if (result.data.company || result.data.jobTitle) {
+          toast.warning('Limited information found. Please paste the full job description manually.')
+        } else {
+          toast.warning('Could not extract job details. Please fill in the information manually.')
+        }
       } else if (result.blocked || result.isBlockedSite) {
-        toast.error(result.message || result.details || 'This site blocks automated access')
+        toast.error('This site blocks automated access. Please copy and paste the job details manually.')
       } else {
-        toast.error(result.message || result.details || 'Failed to extract job details')
+        toast.error('Unable to fetch from this URL. Please paste the job details manually.')
       }
     } catch (error) {
       console.error('URL parse error:', error)
-      toast.error('Failed to fetch job details')
+      toast.error('Network error. Please check your connection and try again.')
     } finally {
       setIsParsingUrl(false)
     }
   }
 
-  // Handle resume tailoring
+  // Handle resume tailoring with comprehensive error handling
   const handleTailorResume = async () => {
+    // Input validation
     if (!jobTitle || !companyName || !jobDescription) {
       toast.error('Please fill in job details first')
       return
     }
 
+    // Check if resume has content
+    if (!resumeData || (!resumeData.workExperience?.length && !resumeData.education?.length)) {
+      toast.error('Please add your experience and education before tailoring')
+      return
+    }
+
+    console.log('🚀 Starting resume tailoring...');
+    console.log('Job details:', { jobTitle, companyName, locationLength: jobLocation.length, descriptionLength: jobDescription.length });
+
     setIsTailoring(true)
+    setRightPanelMode('job') // Ensure job panel is visible during tailoring
+
     try {
+      // Log the request payload
+      const requestPayload = {
+        jobTitle,
+        company: companyName,
+        location: jobLocation,
+        description: jobDescription,
+        extraContext,
+        contextTags
+      };
+      console.log('📤 Sending tailoring request:', {
+        ...requestPayload,
+        description: `${requestPayload.description.substring(0, 100)}...`
+      });
+
       const response = await fetch(`/api/resumes/${resumeId}/tailor`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jobTitle,
-          company: companyName,
-          location: jobLocation,
-          description: jobDescription,
-          extraContext,
-          contextTags
-        })
+        body: JSON.stringify(requestPayload)
       })
 
+      console.log('📥 Response status:', response.status);
+
       const data = await response.json()
+      console.log('📥 Response data:', {
+        success: data.success,
+        hasResume: !!data.tailoredResume,
+        error: data.error,
+        details: data.details
+      });
+
+      if (!response.ok) {
+        // Handle specific error cases with user-friendly messages
+        if (response.status === 500 && data.error?.includes('AI service')) {
+          toast.error('AI service temporarily unavailable. Please try again in a moment.');
+        } else if (response.status === 429) {
+          toast.error('Service is busy. Please wait a few seconds and try again.');
+        } else if (response.status === 400) {
+          toast.error(data.error || 'Invalid request. Please check your inputs.');
+        } else {
+          toast.error(data.error || 'Failed to tailor resume. Please try again.');
+        }
+        return;
+      }
 
       if (data.success && data.tailoredResume) {
+        console.log('✅ Tailoring successful, updating UI...');
+
         // Save original content if this is the first tailoring
         if (!originalContent) {
           setOriginalContent(resumeData)
@@ -389,18 +494,29 @@ export default function UnifiedEditorPage() {
         setTailoredJobTitle(jobTitle)
 
         // Save the tailored version
-        await saveResume()
+        await saveResume(false) // Don't show save toast to avoid double notifications
 
-        toast.success('Resume tailored successfully')
-        setIsJobPanelOpen(false)
+        // Show success and switch to preview
+        toast.success('Resume tailored successfully! Review your optimized resume.')
+        setRightPanelMode('preview') // Auto-switch to preview to show the result
       } else {
-        toast.error('Failed to tailor resume')
+        // Fallback error handling
+        const errorMsg = data.error || data.message || 'Failed to tailor resume';
+        console.error('❌ Tailoring failed:', errorMsg);
+        toast.error(errorMsg);
       }
     } catch (error) {
-      console.error('Tailoring error:', error)
-      toast.error('Failed to tailor resume')
+      // Network or unexpected errors
+      console.error('❌ Tailoring error:', error)
+
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        toast.error('Network error. Please check your connection and try again.');
+      } else {
+        toast.error('Unexpected error occurred. Your data is safe. Please try again.');
+      }
     } finally {
       setIsTailoring(false)
+      console.log('🏁 Tailoring process completed');
     }
   }
 
@@ -539,7 +655,7 @@ export default function UnifiedEditorPage() {
               <CollapsibleSectionWrapper
                 title="Contact Information"
                 icon={<User className="w-4 h-4" />}
-                isComplete={!!(resumeData?.contactInfo && (resumeData.contactInfo as ContactInfo).email)}
+                completionPercentage={calculateSectionCompletion('contact', resumeData?.contactInfo)}
               >
                 <ContactInfoSection
                   contactInfo={resumeData?.contactInfo as ContactInfo || { firstName: '', lastName: '', email: '', phone: '', location: '' }}
@@ -551,7 +667,7 @@ export default function UnifiedEditorPage() {
               <CollapsibleSectionWrapper
                 title="Professional Summary"
                 icon={<FileText className="w-4 h-4" />}
-                isComplete={!!(resumeData?.professionalSummary?.summary && resumeData.professionalSummary.summary.length > 50)}
+                completionPercentage={calculateSectionCompletion('summary', resumeData?.professionalSummary)}
               >
                 <ProfessionalSummarySection
                   professionalSummary={resumeData?.professionalSummary || { summary: '', targetRole: '', keyStrengths: [], careerLevel: 'mid' }}
@@ -563,7 +679,7 @@ export default function UnifiedEditorPage() {
               <CollapsibleSectionWrapper
                 title="Work Experience"
                 icon={<Briefcase className="w-4 h-4" />}
-                isComplete={!!(resumeData?.workExperience && resumeData.workExperience.length > 0)}
+                completionPercentage={calculateSectionCompletion('experience', resumeData?.workExperience)}
               >
                 <WorkExperienceSection
                   workExperience={resumeData?.workExperience || []}
@@ -575,7 +691,7 @@ export default function UnifiedEditorPage() {
               <CollapsibleSectionWrapper
                 title="Education"
                 icon={<GraduationCap className="w-4 h-4" />}
-                isComplete={!!(resumeData?.education && resumeData.education.length > 0)}
+                completionPercentage={calculateSectionCompletion('education', resumeData?.education)}
               >
                 <EducationSection
                   education={resumeData?.education || []}
@@ -587,7 +703,7 @@ export default function UnifiedEditorPage() {
               <CollapsibleSectionWrapper
                 title="Skills"
                 icon={<Wrench className="w-4 h-4" />}
-                isComplete={!!(resumeData?.skills && Object.values(resumeData.skills).flat().length > 0)}
+                completionPercentage={calculateSectionCompletion('skills', resumeData?.skills)}
               >
                 <SkillsSection
                   skills={resumeData?.skills || { technical: [], frameworks: [], tools: [], cloud: [], databases: [], soft: [], certifications: [] }}
@@ -904,18 +1020,18 @@ export default function UnifiedEditorPage() {
                   {/* Divider */}
                   <div className="my-6 border-t border-white/10" />
 
-                  {/* Tailor Button */}
+                  {/* Tailor Button with Progress States */}
                   <button
                     onClick={handleTailorResume}
                     disabled={isTailoring || !jobTitle || !companyName || !jobDescription}
-                    className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-900 rounded-md inline-flex items-center justify-center gap-2 text-[13px] font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-900 rounded-md inline-flex items-center justify-center gap-2 text-[13px] font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
                   >
                     {isTailoring ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Tailoring Resume...
+                        <span className="animate-pulse">Tailoring Resume...</span>
                       </>
-                    ) : tailoredJobCompany ? (
+                    ) : tailoredJobCompany === companyName && tailoredJobTitle === jobTitle ? (
                       <>
                         <Check className="w-4 h-4" />
                         Resume Tailored
@@ -927,6 +1043,35 @@ export default function UnifiedEditorPage() {
                       </>
                     )}
                   </button>
+
+                  {/* Tailoring Progress Card */}
+                  {isTailoring && (
+                    <div className="mt-4 p-4 bg-slate-800/50 border border-emerald-500/30 rounded-lg animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                            <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-[12px] font-medium text-white">
+                              Optimizing your resume
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">
+                              {[
+                                "Analyzing job requirements...",
+                                "Matching your skills...",
+                                "Optimizing experience bullets...",
+                                "Polishing professional summary..."
+                              ][Math.floor(Date.now() / 2000) % 4]}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="w-full h-1 bg-slate-700 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full animate-progress" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {tailoredJobCompany && (
                     <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-md">

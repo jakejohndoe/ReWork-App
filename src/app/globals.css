@@ -448,3 +448,14 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Progress animation for tailoring */
+@keyframes progress {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
+
+.animate-progress {
+  animation: progress 3s ease-in-out infinite;
+}

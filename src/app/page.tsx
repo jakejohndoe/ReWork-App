@@ -126,7 +126,10 @@ export default function HomePage() {
                 >
                   Pricing
                 </a>
-                <Link href="/auth/signin" className="text-gray-300 hover:text-white transition-colors duration-200 font-medium">
+                <Link
+                  href="/auth/signin"
+                  className="px-4 py-2 text-gray-300 hover:text-white border border-gray-600 hover:border-gray-400 rounded-md transition-all duration-200 font-medium hover:bg-white/5"
+                >
                   Login
                 </Link>
                 <Link href="/auth/signin">
