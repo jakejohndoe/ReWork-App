@@ -1,11 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import { Settings, User, LogOut } from "lucide-react"
 import { Logo } from "@/components/ui/logo"
 import { useState } from "react"
 import { SettingsModal } from "@/components/settings-modal"
+import { LogoutModal } from "@/components/logout-modal"
 import { UserAvatar } from "@/components/ui/avatar"
 
 interface NavigationProps {
@@ -17,6 +18,7 @@ interface NavigationProps {
 export default function Navigation({ className = "", showUserMenu = true, children }: NavigationProps) {
   const { data: session } = useSession()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false)
 
   return (
     <>
@@ -63,7 +65,7 @@ export default function Navigation({ className = "", showUserMenu = true, childr
 
                   {/* Sign Out */}
                   <button
-                    onClick={() => signOut()}
+                    onClick={() => setIsLogoutOpen(true)}
                     className="p-2 text-slate-400 hover:text-white transition-all rounded-md hover:bg-white/5"
                     title="Sign out"
                   >
@@ -78,6 +80,9 @@ export default function Navigation({ className = "", showUserMenu = true, childr
 
       {/* Settings Modal */}
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+
+      {/* Logout Modal */}
+      <LogoutModal isOpen={isLogoutOpen} onClose={() => setIsLogoutOpen(false)} />
 
       {/* Spacer to prevent content from going under fixed nav */}
       <div style={{ height: 'var(--nav-height)' }} />

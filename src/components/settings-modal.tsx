@@ -22,7 +22,7 @@ import {
   CheckCircle,
   CreditCard
 } from "lucide-react"
-import { avatarOptions, AvatarId, UserAvatar, saveAvatarSelection, getAvatarSelection } from "@/components/ui/avatar"
+import { AvatarColorPicker, UserAvatar } from "@/components/ui/avatar"
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -37,22 +37,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [emailNotifications, setEmailNotifications] = useState(true)
   const [autoOptimization, setAutoOptimization] = useState(false)
   const [dataRetention, setDataRetention] = useState(true)
-  const [selectedAvatar, setSelectedAvatar] = useState<AvatarId>('dev')
+  // Avatar state removed - now handled by AvatarColorPicker component
 
   const isPremium = session?.user?.plan === "PREMIUM"
 
-  useEffect(() => {
-    if (session?.user?.id) {
-      setSelectedAvatar(getAvatarSelection(session.user.id))
-    }
-  }, [session?.user?.id])
-
-  const handleAvatarSelect = (avatarId: AvatarId) => {
-    setSelectedAvatar(avatarId)
-    if (session?.user?.id) {
-      saveAvatarSelection(session.user.id, avatarId)
-    }
-  }
+  // Avatar color is now handled by the AvatarColorPicker component
 
   const tabs = [
     { id: 'account' as const, label: 'Account', icon: User },
@@ -114,26 +103,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <Separator className="bg-white/10" />
 
             <div>
-              <h3 className="text-lg font-semibold text-white mb-4">Avatar Selection</h3>
-              <div className="grid grid-cols-4 gap-3">
-                {Object.entries(avatarOptions).map(([avatarId, emoji]) => (
-                  <button
-                    key={avatarId}
-                    onClick={() => handleAvatarSelect(avatarId as AvatarId)}
-                    className={`w-16 h-16 rounded-full bg-slate-700 border-2 transition-all flex items-center justify-center group ${
-                      selectedAvatar === avatarId
-                        ? 'border-white/60 bg-slate-600'
-                        : 'border-slate-600 hover:border-white/40'
-                    }`}
-                  >
-                    <span className="text-2xl group-hover:scale-110 transition-transform select-none">
-                      {emoji}
-                    </span>
-                  </button>
-                ))}
-              </div>
+              <h3 className="text-lg font-semibold text-white mb-4">Avatar Customization</h3>
+              <AvatarColorPicker userId={session?.user?.id} />
               <p className="text-sm text-slate-400 mt-3">
-                Your selected avatar will appear in the navigation bar.
+                Your selected color will appear with your initials in the navigation bar.
               </p>
             </div>
           </div>
@@ -307,7 +280,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-slate-900/95 backdrop-blur-xl border border-white/20 max-w-[800px] h-[550px] p-0 overflow-hidden">
+      <DialogContent className="bg-slate-900/95 backdrop-blur-xl border border-white/20 max-w-[900px] h-[550px] p-0 overflow-hidden">
         <div className="flex h-full">
           {/* Left Sidebar - Tab Navigation */}
           <div className="w-48 bg-slate-800/50 border-r border-white/10 p-4">

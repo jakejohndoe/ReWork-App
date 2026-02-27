@@ -364,22 +364,34 @@ Focus on creating a compelling narrative that shows why this candidate is perfec
         careerLevel: 'mid'
       } : currentContent.professionalSummary,
       workExperience: Array.isArray(tailoredData.experience) ?
-        tailoredData.experience.map((exp: any) => ({
+        tailoredData.experience.map((exp: any, index: number) => ({
+          id: `exp_${Date.now()}_${index}`,
           role: exp.title,
           company: exp.company,
           dates: `${exp.startDate} - ${exp.endDate}`,
           location: exp.location || '',
           achievements: exp.description ? exp.description.split('•').map((a: string) => a.trim()).filter(Boolean) : [],
-          current: exp.endDate?.toLowerCase().includes('present') || false
+          current: exp.endDate?.toLowerCase().includes('present') || false,
+          jobTitle: exp.title, // Some components may use jobTitle instead of role
+          startDate: exp.startDate,
+          endDate: exp.endDate,
+          isCurrentRole: exp.endDate?.toLowerCase().includes('present') || false,
+          technologies: []
         })) : [],
       education: Array.isArray(tailoredData.education) ?
-        tailoredData.education.map((edu: any) => ({
+        tailoredData.education.map((edu: any, index: number) => ({
+          id: `edu_${Date.now()}_${index}`,
           degree: edu.degree,
           school: edu.school,
+          institution: edu.school, // Some components may use institution instead of school
           graduationDate: edu.year,
+          graduationYear: edu.year, // Alternative field name
           gpa: edu.gpa || '',
+          field: edu.fieldOfStudy || '', // Alternative field name
           fieldOfStudy: edu.fieldOfStudy || '',
-          additionalInfo: edu.additionalInfo || ''
+          additionalInfo: edu.additionalInfo || '',
+          honors: [],
+          relevantCoursework: []
         })) : [],
       skills: Array.isArray(tailoredData.skills) ? {
         technical: tailoredData.skills,

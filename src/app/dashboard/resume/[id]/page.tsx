@@ -256,12 +256,15 @@ export default function UnifiedEditorPage() {
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([])
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
 
+  // Auto-save timer refs
+  const jobSaveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+
   // Extra context states
   const [showExtraContext, setShowExtraContext] = useState(false)
   const [extraContext, setExtraContext] = useState("")
   const [contextTags, setContextTags] = useState<string[]>([])
 
-  // Fetch resume data on mount
+  // Fetch resume data on mount and load saved job description
   useEffect(() => {
     const fetchResumeData = async () => {
       try {
@@ -294,6 +297,21 @@ export default function UnifiedEditorPage() {
 
     if (resumeId) {
       fetchResumeData()
+
+      // Load saved job description from localStorage
+      const savedJobData = localStorage.getItem(`job_${resumeId}`)
+      if (savedJobData) {
+        try {
+          const parsed = JSON.parse(savedJobData)
+          setJobTitle(parsed.jobTitle || '')
+          setCompanyName(parsed.companyName || '')
+          setJobLocation(parsed.jobLocation || '')
+          setJobDescription(parsed.jobDescription || '')
+          setJobUrl(parsed.jobUrl || '')
+        } catch (e) {
+          console.error('Failed to parse saved job data:', e)
+        }
+      }
     }
   }, [resumeId])
 
@@ -358,6 +376,39 @@ export default function UnifiedEditorPage() {
       }
     }
   }, [resumeData])
+
+  // Auto-save job description to localStorage
+  useEffect(() => {
+    if (!resumeId) return
+
+    // Clear existing timeout
+    if (jobSaveTimeoutRef.current) {
+      clearTimeout(jobSaveTimeoutRef.current)
+    }
+
+    // Only save if there's actual content
+    if (jobTitle || companyName || jobLocation || jobDescription || jobUrl) {
+      // Set new timeout for auto-save
+      jobSaveTimeoutRef.current = setTimeout(() => {
+        const jobData = {
+          jobTitle,
+          companyName,
+          jobLocation,
+          jobDescription,
+          jobUrl,
+          savedAt: new Date().toISOString()
+        }
+        localStorage.setItem(`job_${resumeId}`, JSON.stringify(jobData))
+        console.log('💾 Job description auto-saved to localStorage')
+      }, 2000) // Save after 2 seconds of inactivity
+    }
+
+    return () => {
+      if (jobSaveTimeoutRef.current) {
+        clearTimeout(jobSaveTimeoutRef.current)
+      }
+    }
+  }, [jobTitle, companyName, jobLocation, jobDescription, jobUrl, resumeId])
 
   // Handle job URL parsing with improved feedback
   const handleUrlParse = async () => {
@@ -483,16 +534,61 @@ export default function UnifiedEditorPage() {
 
       if (data.success && data.tailoredResume) {
         console.log('✅ Tailoring successful, updating UI...');
+        console.log('📊 Tailored data structure:', {
+          hasContactInfo: !!data.tailoredResume.contactInfo,
+          hasProfessionalSummary: !!data.tailoredResume.professionalSummary,
+          workExperienceCount: data.tailoredResume.workExperience?.length || 0,
+          educationCount: data.tailoredResume.education?.length || 0,
+          hasSkills: !!data.tailoredResume.skills
+        });
 
-        // Save original content if this is the first tailoring
-        if (!originalContent) {
-          setOriginalContent(resumeData)
+        try {
+          // Save original content if this is the first tailoring
+          if (!originalContent) {
+            setOriginalContent(resumeData)
+          }
+
+          // Validate and transform the tailored data
+          const validatedData = {
+            ...data.tailoredResume,
+            // Ensure all arrays have items with IDs
+            workExperience: Array.isArray(data.tailoredResume.workExperience)
+              ? data.tailoredResume.workExperience.map((exp: any, index: number) => ({
+                  ...exp,
+                  id: exp.id || `exp_tailored_${index}`,
+                  achievements: Array.isArray(exp.achievements) ? exp.achievements : []
+                }))
+              : [],
+            education: Array.isArray(data.tailoredResume.education)
+              ? data.tailoredResume.education.map((edu: any, index: number) => ({
+                  ...edu,
+                  id: edu.id || `edu_tailored_${index}`
+                }))
+              : [],
+            // Ensure skills is properly structured
+            skills: data.tailoredResume.skills || {
+              technical: [], frameworks: [], tools: [],
+              cloud: [], databases: [], soft: [], certifications: []
+            },
+            // Ensure contact info has required fields
+            contactInfo: data.tailoredResume.contactInfo || resumeData?.contactInfo || {
+              firstName: '', lastName: '', email: '', phone: '', location: ''
+            },
+            // Ensure professional summary is properly structured
+            professionalSummary: data.tailoredResume.professionalSummary || {
+              summary: '', targetRole: '', keyStrengths: [], careerLevel: 'mid'
+            }
+          };
+
+          // Update with tailored content
+          setResumeData(validatedData)
+          setTailoredJobCompany(companyName)
+          setTailoredJobTitle(jobTitle)
+        } catch (transformError) {
+          console.error('❌ Error transforming tailored data:', transformError);
+          toast.error('Failed to apply tailored content. Please try again.');
+          return;
         }
-
-        // Update with tailored content
-        setResumeData(data.tailoredResume)
-        setTailoredJobCompany(companyName)
-        setTailoredJobTitle(jobTitle)
 
         // Save the tailored version
         await saveResume(false) // Don't show save toast to avoid double notifications
