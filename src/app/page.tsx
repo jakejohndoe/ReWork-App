@@ -14,7 +14,9 @@ import {
   CheckCircle,
   Upload,
   Zap,
-  Sparkles
+  Sparkles,
+  Menu,
+  X
 } from "lucide-react"
 import { Logo } from "@/components/ui/logo"
 
@@ -22,6 +24,7 @@ export default function HomePage() {
   const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 })
   const [isLoaded, setIsLoaded] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const heroRef = useRef<HTMLDivElement>(null)
 
   // Client-side mount check
@@ -142,7 +145,7 @@ export default function HomePage() {
               </div>
 
               {/* Mobile Navigation */}
-              <div className="md:hidden">
+              <div className="md:hidden flex items-center gap-2">
                 <Link href="/auth/signin">
                   <Button
                     size="sm"
@@ -151,10 +154,51 @@ export default function HomePage() {
                     Get Started
                   </Button>
                 </Link>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="text-white hover:bg-white/10"
+                >
+                  {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </Button>
               </div>
             </div>
           </div>
         </header>
+
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-slate-900/95 backdrop-blur-xl border-b border-white/10">
+            <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
+              <a
+                href="#how-it-works"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-gray-300 hover:text-white transition-colors duration-200 font-medium py-2"
+              >
+                How It Works
+              </a>
+              <a
+                href="#pricing"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                  setMobileMenuOpen(false);
+                }}
+                className="text-gray-300 hover:text-white transition-colors duration-200 font-medium py-2"
+              >
+                Pricing
+              </a>
+              <Link
+                href="/auth/signin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-gray-300 hover:text-white transition-colors duration-200 font-medium py-2"
+              >
+                Login
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Main Hero and Content */}
         <main className="container mx-auto px-4 py-12 md:py-24">

@@ -7,8 +7,8 @@ import { Toaster } from 'sonner'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'ReWork - AI-Powered Resume Optimization',
-  description: 'Transform your resume for any job in seconds. AI-powered optimization that tailors your experience to match job descriptions perfectly.',
+  title: 'ReWork — smart tech, for smarter jobs',
+  description: 'Transform your resume in seconds with AI-powered optimization. 3 free resumes per month.',
   keywords: 'resume, AI, job application, optimization, career, employment, resume builder, ATS, job search, career tools',
   authors: [{ name: 'ReWork' }],
   creator: 'ReWork',
@@ -18,21 +18,21 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://rework.solutions'),
+  metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://app.rework.solutions'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'ReWork - AI-Powered Resume Optimization',
-    description: 'Transform your resume for any job in seconds. AI-powered optimization that tailors your experience to match job descriptions perfectly.',
+    title: 'ReWork — smart tech, for smarter jobs',
+    description: 'Transform your resume in seconds with AI-powered optimization. 3 free resumes per month.',
     url: '/',
     siteName: 'ReWork',
     images: [
       {
-        url: '/og-image.png',
+        url: 'https://app.rework.solutions/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'ReWork - AI-Powered Resume Optimization',
+        alt: 'ReWork — smart tech, for smarter jobs',
       },
     ],
     locale: 'en_US',
@@ -40,9 +40,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ReWork - AI-Powered Resume Optimization',
-    description: 'Transform your resume for any job in seconds. AI-powered optimization that tailors your experience to match job descriptions perfectly.',
-    images: ['/og-image.png'],
+    title: 'ReWork — smart tech, for smarter jobs',
+    description: 'Transform your resume in seconds with AI-powered optimization. 3 free resumes per month.',
+    images: ['https://app.rework.solutions/og-image.png'],
     creator: '@rework_app',
   },
   robots: {

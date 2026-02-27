@@ -7,12 +7,6 @@ export async function middleware(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth/signin')
   const isLandingPage = request.nextUrl.pathname === '/'
   const isDashboardRoute = request.nextUrl.pathname.startsWith('/dashboard')
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api')
-
-  // Don't redirect API routes
-  if (isApiRoute) {
-    return NextResponse.next()
-  }
 
   // If user is authenticated and tries to access landing page, redirect to dashboard
   if (token && isLandingPage) {

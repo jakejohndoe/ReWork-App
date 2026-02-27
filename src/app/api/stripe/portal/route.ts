@@ -17,23 +17,26 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { plan: true, email: true }
+      select: { plan: true, stripeCustomerId: true }
     })
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    if (user.plan !== 'PREMIUM') {
+    if (user.plan !== 'PREMIUM' || !user.stripeCustomerId) {
       return NextResponse.json({
         error: 'User does not have an active Pro subscription'
       }, { status: 400 })
     }
 
-    // TODO: Implement proper customer portal session with stored stripeCustomerId
-    return NextResponse.json({
-      error: 'Customer portal not yet implemented - please contact support'
-    }, { status: 501 })
+    // Create Stripe Customer Portal session
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: user.stripeCustomerId,
+      return_url: `${process.env.NEXTAUTH_URL}/dashboard`,
+    })
+
+    return NextResponse.json({ url: portalSession.url })
   } catch (error) {
     console.error('Error creating portal session:', error)
     return NextResponse.json(

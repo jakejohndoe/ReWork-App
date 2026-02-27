@@ -239,10 +239,29 @@ async function handleDownload(
 
 
     // Create descriptive filename
-    const versionText = isOptimized ? 'optimized' : 'original';
-    const templateText = template || 'default';
-    const safeTitle = (resume.title || 'resume').replace(/[^a-zA-Z0-9-_]/g, '-');
-    const filename = `${safeTitle}-${versionText}-${templateText}-${Date.now()}.pdf`;
+    // Extract first and last name from contact info
+    let firstName = 'Resume';
+    let lastName = '';
+
+    if (resumeData.contactInfo) {
+      const contactInfo = resumeData.contactInfo as any;
+      const fullName = (contactInfo.name || contactInfo.fullName || '').toString();
+      const nameParts = fullName.trim().split(/\s+/);
+      if (nameParts.length > 0) {
+        firstName = nameParts[0];
+        lastName = nameParts.slice(1).join('_');
+      }
+    }
+
+    // Check if this is a tailored resume
+    const jobApplication = await prisma.jobApplication.findFirst({
+      where: { resumeId: resume.id },
+      select: { company: true }
+    });
+
+    const filename = jobApplication?.company
+      ? `${firstName}_${lastName}_Resume_${jobApplication.company.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+      : `${firstName}_${lastName}_Resume.pdf`;
 
     return new NextResponse(buffer, {
       headers: {

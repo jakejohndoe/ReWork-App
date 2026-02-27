@@ -4,10 +4,14 @@ import Stripe from 'stripe'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-// TODO: Add your Stripe keys to .env
-// STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
-// STRIPE_PRICE_ID=price_your_stripe_price_id (for $3/month subscription)
-// NEXTAUTH_URL=http://localhost:3000 (or your production URL)
+// STRIPE SETUP INSTRUCTIONS:
+// 1. Go to https://dashboard.stripe.com/products
+// 2. Create a new product called "ReWork Pro"
+// 3. Add a recurring price of $3.00/month
+// 4. Copy the price ID (starts with price_) to STRIPE_PRICE_ID in .env
+// 5. Go to Developers > Webhooks, add endpoint: https://app.rework.solutions/api/stripe/webhook
+// 6. Select events: checkout.session.completed, customer.subscription.deleted, customer.subscription.updated
+// 7. Copy the webhook signing secret to STRIPE_WEBHOOK_SECRET in .env
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
   apiVersion: '2026-02-25.clover',
@@ -40,14 +44,31 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    // Create Stripe customer (TODO: Add stripeCustomerId to schema)
-    const customer = await stripe.customers.create({
-      email: user.email,
-      metadata: {
-        userId: user.id,
-      },
+    // Check if user already has a Stripe customer ID
+    let customerId: string
+    const existingUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { stripeCustomerId: true }
     })
-    const customerId = customer.id
+
+    if (existingUser?.stripeCustomerId) {
+      customerId = existingUser.stripeCustomerId
+    } else {
+      // Create new Stripe customer
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: {
+          userId: user.id,
+        },
+      })
+      customerId = customer.id
+
+      // Save the customer ID to the database
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { stripeCustomerId: customerId }
+      })
+    }
 
     // Create checkout session
     const checkoutSession = await stripe.checkout.sessions.create({
