@@ -92,25 +92,21 @@ export default function ModernTemplate({
           <h3 className="text-sm font-bold uppercase tracking-wider mb-4 text-gray-600">
             Skills
           </h3>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {data.skills.map((skill, index) => (
-              <div key={index} className="flex items-center">
-                <div className="w-full bg-gray-200 rounded-full h-2">
+              <div key={index}>
+                <p className="text-xs text-gray-700 mb-1">{skill}</p>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
                   <div
-                    className="h-2 rounded-full transition-all duration-300"
+                    className="h-1.5 rounded-full transition-all duration-300"
                     style={{
                       backgroundColor: accentColor,
-                      width: `${85 + Math.random() * 15}%`
+                      width: `${80 + (index % 3) * 10}%`
                     }}
                   ></div>
                 </div>
               </div>
             ))}
-            <div className="space-y-1 mt-3">
-              {data.skills.map((skill, index) => (
-                <p key={index} className="text-xs text-gray-700">{skill}</p>
-              ))}
-            </div>
           </div>
         </section>
 

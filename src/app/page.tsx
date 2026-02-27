@@ -109,7 +109,13 @@ export default function HomePage() {
               </Link>
 
               {/* Navigation Links - moved to the right */}
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-6">
+                <a
+                  href="#"
+                  className="text-gray-300 hover:text-white transition-colors duration-200 font-medium"
+                >
+                  Docs
+                </a>
                 <a
                   href="#pricing"
                   className="text-gray-300 hover:text-white transition-colors duration-200 font-medium"
@@ -120,17 +126,12 @@ export default function HomePage() {
                 >
                   Pricing
                 </a>
-                <Link href="/auth/signin">
-                  <Button
-                    variant="ghost"
-                    className="text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-200"
-                  >
-                    Login
-                  </Button>
+                <Link href="/auth/signin" className="text-gray-300 hover:text-white transition-colors duration-200 font-medium">
+                  Login
                 </Link>
                 <Link href="/auth/signin">
                   <Button
-                    className="bg-white text-black hover:bg-white/95 border-0 hover:scale-105 hover:shadow-lg hover:shadow-white/25 transition-all duration-300 font-semibold"
+                    className="bg-emerald-500 text-white hover:bg-emerald-400 border-0 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-300 font-semibold px-6"
                   >
                     Get Started
                   </Button>

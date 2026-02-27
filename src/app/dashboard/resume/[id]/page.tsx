@@ -18,6 +18,7 @@ import { ContactInfo, StructuredResumeData, WorkExperience, SkillsStructure, Edu
 import ResumeLoader from '@/components/resume-loader'
 import ResumePreview from '@/components/resume/templates/ResumePreview'
 import TemplateSelector, { TemplateType } from '@/components/resume/templates/TemplateSelector'
+import { US_CITIES } from '@/lib/cities'
 import {
   ArrowLeft,
   Save,
@@ -26,6 +27,7 @@ import {
   Download,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   Sparkles,
   Link as LinkIcon,
   Loader2,
@@ -36,7 +38,8 @@ import {
   User,
   FileText,
   GraduationCap,
-  Wrench
+  Wrench,
+  Plus
 } from "lucide-react"
 
 // Legacy Simple Resume Preview Component (kept for fallback)
@@ -208,6 +211,13 @@ export default function UnifiedEditorPage() {
   const [companyName, setCompanyName] = useState("")
   const [jobLocation, setJobLocation] = useState("")
   const [jobDescription, setJobDescription] = useState("")
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([])
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
+
+  // Extra context states
+  const [showExtraContext, setShowExtraContext] = useState(false)
+  const [extraContext, setExtraContext] = useState("")
+  const [contextTags, setContextTags] = useState<string[]>([])
 
   // Fetch resume data on mount
   useEffect(() => {
@@ -322,18 +332,18 @@ export default function UnifiedEditorPage() {
         body: JSON.stringify({ url: jobUrl })
       })
 
-      const data = await response.json()
+      const result = await response.json()
 
-      if (data.success) {
-        setJobTitle(data.jobTitle || '')
-        setCompanyName(data.company || '')
-        setJobLocation(data.location || '')
-        setJobDescription(data.description || '')
+      if (result.success && result.data) {
+        setJobTitle(result.data.jobTitle || '')
+        setCompanyName(result.data.company || '')
+        setJobLocation(result.data.location || '')
+        setJobDescription(result.data.jobDescription || '')
         toast.success('Job details extracted successfully')
-      } else if (data.blocked) {
-        toast.error(data.message || 'This site blocks automated access')
+      } else if (result.blocked || result.isBlockedSite) {
+        toast.error(result.message || result.details || 'This site blocks automated access')
       } else {
-        toast.error(data.message || 'Failed to extract job details')
+        toast.error(result.message || result.details || 'Failed to extract job details')
       }
     } catch (error) {
       console.error('URL parse error:', error)
@@ -359,7 +369,9 @@ export default function UnifiedEditorPage() {
           jobTitle,
           company: companyName,
           location: jobLocation,
-          description: jobDescription
+          description: jobDescription,
+          extraContext,
+          contextTags
         })
       })
 
@@ -514,28 +526,8 @@ export default function UnifiedEditorPage() {
                         return;
                       }
 
-                      // Auto-expand sections that got populated
-                      setTimeout(() => {
-                        const sections = document.querySelectorAll('.cursor-pointer');
-                        sections.forEach(section => {
-                          const header = section as HTMLElement;
-                          if (header.textContent?.includes('Contact') && data.contact?.email) {
-                            header.click();
-                          }
-                          if (header.textContent?.includes('Summary') && data.summary) {
-                            header.click();
-                          }
-                          if (header.textContent?.includes('Experience') && data.experience?.length > 0) {
-                            header.click();
-                          }
-                          if (header.textContent?.includes('Education') && data.education?.length > 0) {
-                            header.click();
-                          }
-                          if (header.textContent?.includes('Skills') && data.skills?.length > 0) {
-                            header.click();
-                          }
-                        });
-                      }, 100);
+                      // Keep all sections collapsed - green dots show they're filled
+                      // Users can expand individually to review
 
                       toast.success('Resume auto-filled successfully! Review each section to verify the information.');
                     }
@@ -602,6 +594,70 @@ export default function UnifiedEditorPage() {
                   onChange={(data) => setResumeData(prev => prev ? {...prev, skills: data} : null)}
                 />
               </CollapsibleSectionWrapper>
+
+              {/* Extra Context Section */}
+              <div className="mb-6">
+                <button
+                  onClick={() => setShowExtraContext(!showExtraContext)}
+                  className="w-full px-4 py-3 bg-slate-800/30 hover:bg-slate-800/40 border border-white/10 rounded-lg text-[13px] text-slate-400 hover:text-white transition-all flex items-center justify-between group"
+                >
+                  <span className="flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    Add Extra Context
+                  </span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showExtraContext ? 'rotate-180' : ''}`} />
+                </button>
+
+                {showExtraContext && (
+                  <div className="mt-3 p-4 bg-slate-800/20 border border-white/10 rounded-lg space-y-4">
+                    <div>
+                      <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block mb-2">
+                        Anything else we should know?
+                      </label>
+                      <textarea
+                        value={extraContext}
+                        onChange={(e) => setExtraContext(e.target.value)}
+                        placeholder="e.g., I'm switching careers, I have volunteer experience, I want to emphasize leadership skills..."
+                        rows={3}
+                        className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-md text-[13px] text-white placeholder:text-slate-500 hover:border-white/20 focus:border-white/30 focus:outline-none transition-all resize-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block mb-2">
+                        Quick Context Tags
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          "Career Changer",
+                          "Recent Graduate",
+                          "Employment Gaps",
+                          "Volunteer Work",
+                          "Military Transition"
+                        ].map(tag => (
+                          <button
+                            key={tag}
+                            onClick={() => {
+                              if (contextTags.includes(tag)) {
+                                setContextTags(contextTags.filter(t => t !== tag))
+                              } else {
+                                setContextTags([...contextTags, tag])
+                              }
+                            }}
+                            className={`px-3 py-1.5 text-[11px] font-medium rounded-md transition-all border ${
+                              contextTags.includes(tag)
+                                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                : 'bg-slate-800/30 text-slate-400 border-white/10 hover:bg-slate-800/50 hover:text-white'
+                            }`}
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Next Step Guidance */}
               <div className="mt-8 p-6 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border border-emerald-500/20 rounded-lg">
@@ -771,17 +827,58 @@ export default function UnifiedEditorPage() {
                       />
                     </div>
 
-                    <div>
+                    <div className="relative">
                       <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block mb-1.5">
                         Location
                       </label>
                       <input
                         type="text"
                         value={jobLocation}
-                        onChange={(e) => setJobLocation(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value
+                          setJobLocation(value)
+
+                          if (value.length >= 3) {
+                            const filtered = US_CITIES.filter(city =>
+                              city.toLowerCase().includes(value.toLowerCase())
+                            ).slice(0, 8)
+                            setLocationSuggestions(filtered)
+                            setShowLocationSuggestions(filtered.length > 0)
+                          } else {
+                            setShowLocationSuggestions(false)
+                          }
+                        }}
+                        onFocus={() => {
+                          if (jobLocation.length >= 3 && locationSuggestions.length > 0) {
+                            setShowLocationSuggestions(true)
+                          }
+                        }}
+                        onBlur={() => {
+                          // Delay to allow clicking on suggestions
+                          setTimeout(() => setShowLocationSuggestions(false), 200)
+                        }}
                         placeholder="e.g. San Francisco, CA"
                         className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-md text-[13px] text-white placeholder:text-slate-500 hover:border-white/20 focus:border-white/30 focus:outline-none transition-all"
                       />
+
+                      {/* Location Suggestions Dropdown */}
+                      {showLocationSuggestions && (
+                        <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-white/10 rounded-md shadow-xl overflow-hidden">
+                          {locationSuggestions.map((city, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              onClick={() => {
+                                setJobLocation(city)
+                                setShowLocationSuggestions(false)
+                              }}
+                              className="w-full px-3 py-2 text-left text-[12px] text-white hover:bg-slate-700 transition-colors"
+                            >
+                              {city}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div>

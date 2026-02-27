@@ -18,15 +18,19 @@ export async function POST(
     const { id } = await params;
     const resumeId = id;
 
-    const { jobTitle, companyName, jobDescription } = await request.json();
+    const { jobTitle, company, companyName, location, description, jobDescription, extraContext, contextTags } = await request.json();
 
-    if (!jobTitle || !companyName || !jobDescription) {
+    // Accept both company and companyName for backwards compatibility
+    const actualCompanyName = company || companyName;
+    const actualJobDescription = description || jobDescription;
+
+    if (!jobTitle || !actualCompanyName || !actualJobDescription) {
       return NextResponse.json({
         error: 'Missing required job information'
       }, { status: 400 });
     }
 
-    console.log('🎯 Starting resume tailoring for:', { resumeId, jobTitle, companyName });
+    console.log('🎯 Starting resume tailoring for:', { resumeId, jobTitle, company: actualCompanyName });
 
     // Get the resume with user data
     const resume = await prisma.resume.findUnique({
@@ -73,6 +77,18 @@ export async function POST(
     console.log('📝 Creating tailored resume with GPT-4o...');
 
     // Create the tailoring prompt
+    const contextSection = (extraContext || contextTags?.length) ? `
+ADDITIONAL CONTEXT:
+${extraContext ? `Additional Information: ${extraContext}` : ''}
+${contextTags?.length ? `Context Tags: ${contextTags.join(', ')}` : ''}
+
+Consider this context when tailoring the resume. For example:
+- Career Changer: Emphasize transferable skills and relevant achievements
+- Recent Graduate: Highlight academic projects, internships, and potential
+- Employment Gaps: Focus on skills maintained and any freelance/volunteer work
+- Military Transition: Translate military experience to civilian terms
+` : '';
+
     const prompt = `You are an expert resume writer who creates authentic, compelling resumes tailored for specific positions. Your task is to rewrite this resume to align with the job posting while maintaining complete accuracy about the candidate's actual experience.
 
 CANDIDATE'S CURRENT RESUME:
@@ -80,9 +96,10 @@ ${JSON.stringify(resumeData, null, 2)}
 
 TARGET JOB:
 Position: ${jobTitle}
-Company: ${companyName}
+Company: ${actualCompanyName}
 Job Description:
-${jobDescription}
+${actualJobDescription}
+${contextSection}
 
 CRITICAL RULES:
 1. NEVER fabricate experience, skills, dates, companies, schools, or achievements
@@ -186,7 +203,7 @@ Focus on creating a compelling narrative that shows why this candidate is perfec
 
     console.log('✅ Tailored resume generated successfully');
 
-    // Transform the tailored data to match the database schema
+    // Transform the tailored data to match the database schema AND frontend expectations
     const tailoredContent = {
       contact: tailoredData.contact || currentContent.contact,
       summary: tailoredData.summary || '',
@@ -212,9 +229,47 @@ Focus on creating a compelling narrative that shows why this candidate is perfec
       skills: Array.isArray(tailoredData.skills) ? tailoredData.skills : [],
       tailoredFor: {
         jobTitle,
-        company: companyName,
+        company: actualCompanyName,
         tailoredAt: new Date().toISOString()
       }
+    };
+
+    // Create the frontend-compatible structure
+    const frontendResume = {
+      contactInfo: tailoredData.contact || currentContent.contact,
+      professionalSummary: tailoredData.summary ? {
+        summary: tailoredData.summary,
+        targetRole: '',
+        keyStrengths: [],
+        careerLevel: 'mid'
+      } : currentContent.professionalSummary,
+      workExperience: Array.isArray(tailoredData.experience) ?
+        tailoredData.experience.map((exp: any) => ({
+          role: exp.title,
+          company: exp.company,
+          dates: `${exp.startDate} - ${exp.endDate}`,
+          location: exp.location || '',
+          achievements: exp.description ? exp.description.split('•').map((a: string) => a.trim()).filter(Boolean) : [],
+          current: exp.endDate?.toLowerCase().includes('present') || false
+        })) : [],
+      education: Array.isArray(tailoredData.education) ?
+        tailoredData.education.map((edu: any) => ({
+          degree: edu.degree,
+          school: edu.school,
+          graduationDate: edu.year,
+          gpa: edu.gpa || '',
+          fieldOfStudy: edu.fieldOfStudy || '',
+          additionalInfo: edu.additionalInfo || ''
+        })) : [],
+      skills: Array.isArray(tailoredData.skills) ? {
+        technical: tailoredData.skills,
+        frameworks: [],
+        tools: [],
+        cloud: [],
+        databases: [],
+        soft: [],
+        certifications: []
+      } : currentContent.skills || { technical: [], frameworks: [], tools: [], cloud: [], databases: [], soft: [], certifications: [] }
     };
 
     // Update the resume with tailored content
@@ -233,7 +288,7 @@ Focus on creating a compelling narrative that shows why this candidate is perfec
       where: {
         resumeId: resumeId,
         jobTitle: jobTitle,
-        company: companyName
+        company: actualCompanyName
       },
       data: {
         optimizedContent: tailoredContent
@@ -242,7 +297,8 @@ Focus on creating a compelling narrative that shows why this candidate is perfec
 
     return NextResponse.json({
       success: true,
-      message: `Resume tailored for ${jobTitle} at ${companyName}`,
+      message: `Resume tailored for ${jobTitle} at ${actualCompanyName}`,
+      tailoredResume: frontendResume,
       tailoredContent
     });
 
