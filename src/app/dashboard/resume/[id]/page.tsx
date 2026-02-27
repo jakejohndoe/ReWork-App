@@ -19,6 +19,7 @@ import ResumeLoader from '@/components/resume-loader'
 import ResumePreview from '@/components/resume/templates/ResumePreview'
 import TemplateSelector, { TemplateType } from '@/components/resume/templates/TemplateSelector'
 import { US_CITIES } from '@/lib/cities'
+import TailoringProgress from '@/components/tailoring-progress'
 import {
   ArrowLeft,
   Save,
@@ -874,15 +875,24 @@ export default function UnifiedEditorPage() {
               ) : (
                 /* Job Description Panel */
                 <div className="flex-1 overflow-y-auto p-6">
-                  {/* Header */}
-                  <div className="mb-6">
-                    <h2 className="text-[14px] font-semibold text-white mb-1">
-                      Target Job Description
-                    </h2>
-                    <p className="text-[12px] text-slate-400">
-                      Add job details to tailor your resume
-                    </p>
-                  </div>
+                  {/* Show tailoring progress if active */}
+                  {isTailoring ? (
+                    <TailoringProgress
+                      isActive={isTailoring}
+                      jobTitle={jobTitle}
+                      companyName={companyName}
+                    />
+                  ) : (
+                    <>
+                      {/* Header */}
+                      <div className="mb-6">
+                        <h2 className="text-[14px] font-semibold text-white mb-1">
+                          Target Job Description
+                        </h2>
+                        <p className="text-[12px] text-slate-400">
+                          Add job details to tailor your resume
+                        </p>
+                      </div>
 
                   {/* URL Input */}
                   <div className="mb-5">
@@ -1044,35 +1054,6 @@ export default function UnifiedEditorPage() {
                     )}
                   </button>
 
-                  {/* Tailoring Progress Card */}
-                  {isTailoring && (
-                    <div className="mt-4 p-4 bg-slate-800/50 border border-emerald-500/30 rounded-lg animate-in fade-in slide-in-from-bottom-2 duration-300">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                            <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-[12px] font-medium text-white">
-                              Optimizing your resume
-                            </p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">
-                              {[
-                                "Analyzing job requirements...",
-                                "Matching your skills...",
-                                "Optimizing experience bullets...",
-                                "Polishing professional summary..."
-                              ][Math.floor(Date.now() / 2000) % 4]}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="w-full h-1 bg-slate-700 rounded-full overflow-hidden">
-                          <div className="h-full bg-emerald-500 rounded-full animate-progress" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   {tailoredJobCompany && (
                     <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-md">
                       <div className="flex items-center justify-between">
@@ -1088,6 +1069,8 @@ export default function UnifiedEditorPage() {
                         </button>
                       </div>
                     </div>
+                  )}
+                    </>
                   )}
                 </div>
               )}

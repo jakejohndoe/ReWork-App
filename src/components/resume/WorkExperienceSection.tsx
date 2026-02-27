@@ -20,6 +20,7 @@ import {
   Lightbulb
 } from "lucide-react"
 import { WorkExperience } from "@/types/resume"
+import { US_CITIES } from '@/lib/cities'
 
 interface WorkExperienceSectionProps {
   workExperience: WorkExperience[] | null | undefined
@@ -37,6 +38,8 @@ export default function WorkExperienceSection({ workExperience, onChange, classN
   const [formData, setFormData] = useState<WorkExperience[]>([])
   const [errors, setErrors] = useState<ValidationErrors>({})
   const [completionScore, setCompletionScore] = useState(0)
+  const [locationSuggestions, setLocationSuggestions] = useState<{ [jobId: string]: string[] }>({})
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState<{ [jobId: string]: boolean }>({})
 
   // Initialize form data when workExperience prop changes
   useEffect(() => {
@@ -315,17 +318,59 @@ export default function WorkExperienceSection({ workExperience, onChange, classN
             </div>
 
             {/* Location */}
-            <div className="space-y-2">
+            <div className="space-y-2 relative">
               <Label className="text-white font-medium flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-purple-400" />
                 Location
               </Label>
               <Input
                 value={job.location}
-                onChange={(e) => handleJobChange(job.id, 'location', e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value
+                  handleJobChange(job.id, 'location', value)
+
+                  // Show city suggestions
+                  if (value.length >= 3) {
+                    const filtered = US_CITIES.filter(city =>
+                      city.toLowerCase().includes(value.toLowerCase())
+                    ).slice(0, 8)
+                    setLocationSuggestions(prev => ({ ...prev, [job.id]: filtered }))
+                    setShowLocationSuggestions(prev => ({ ...prev, [job.id]: filtered.length > 0 }))
+                  } else {
+                    setShowLocationSuggestions(prev => ({ ...prev, [job.id]: false }))
+                  }
+                }}
+                onFocus={() => {
+                  if (job.location.length >= 3 && locationSuggestions[job.id]?.length > 0) {
+                    setShowLocationSuggestions(prev => ({ ...prev, [job.id]: true }))
+                  }
+                }}
+                onBlur={() => {
+                  // Delay to allow clicking on suggestions
+                  setTimeout(() => setShowLocationSuggestions(prev => ({ ...prev, [job.id]: false })), 200)
+                }}
                 placeholder="San Francisco, CA"
                 className="bg-white/5 border-white/20 text-white placeholder:text-slate-400 focus:border-primary-400"
               />
+
+              {/* Location Suggestions Dropdown */}
+              {showLocationSuggestions[job.id] && locationSuggestions[job.id]?.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-white/10 rounded-md shadow-xl overflow-hidden">
+                  {locationSuggestions[job.id].map((city, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => {
+                        handleJobChange(job.id, 'location', city)
+                        setShowLocationSuggestions(prev => ({ ...prev, [job.id]: false }))
+                      }}
+                      className="w-full px-3 py-2 text-left text-[12px] text-white hover:bg-slate-700 transition-colors"
+                    >
+                      {city}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Dates & Current Role */}

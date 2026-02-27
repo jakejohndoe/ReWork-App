@@ -76,13 +76,26 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get the current resume content
-    const currentContent = resume.currentContent as any;
-    if (!currentContent) {
+    // Get the current resume content from structured fields
+    // The database stores data in separate fields, not in currentContent
+    const hasStructuredData = resume.contactInfo || resume.workExperience || resume.education;
+
+    if (!hasStructuredData) {
       return NextResponse.json({
         error: 'Resume content not found. Please fill out your resume first.'
       }, { status: 400 });
     }
+
+    // Build the current content from structured fields
+    const currentContent = {
+      contactInfo: resume.contactInfo as any || {},
+      professionalSummary: resume.professionalSummary as any || {},
+      workExperience: resume.workExperience as any || [],
+      education: resume.education as any || [],
+      skills: resume.skills as any || {},
+      projects: resume.projects as any || [],
+      additionalSections: resume.additionalSections as any || {}
+    };
 
     // Save the original content if not already saved
     if (!resume.originalContent) {
@@ -94,13 +107,37 @@ export async function POST(
       });
     }
 
-    // Prepare the resume data for the AI
+    // Prepare the resume data for the AI - transform to expected format
     const resumeData = {
-      contact: currentContent.contact || {},
-      summary: currentContent.summary || '',
-      experience: currentContent.experience || [],
-      education: currentContent.education || [],
-      skills: currentContent.skills || []
+      contact: currentContent.contactInfo || {},
+      summary: typeof currentContent.professionalSummary === 'object'
+        ? currentContent.professionalSummary.summary || ''
+        : currentContent.professionalSummary || '',
+      experience: Array.isArray(currentContent.workExperience)
+        ? currentContent.workExperience.map((exp: any) => ({
+            title: exp.role || exp.title,
+            company: exp.company,
+            startDate: exp.dates?.split(' - ')[0] || exp.startDate || '',
+            endDate: exp.dates?.split(' - ')[1] || exp.endDate || '',
+            location: exp.location || '',
+            description: Array.isArray(exp.achievements)
+              ? exp.achievements.join(' • ')
+              : exp.responsibilities || ''
+          }))
+        : [],
+      education: Array.isArray(currentContent.education)
+        ? currentContent.education.map((edu: any) => ({
+            degree: edu.degree,
+            school: edu.school || edu.institution,
+            year: edu.graduationDate || edu.year,
+            gpa: edu.gpa || '',
+            fieldOfStudy: edu.fieldOfStudy || '',
+            additionalInfo: edu.additionalInfo || ''
+          }))
+        : [],
+      skills: currentContent.skills && typeof currentContent.skills === 'object'
+        ? Object.values(currentContent.skills).flat()
+        : []
     };
 
     console.log('📝 Creating tailored resume with OpenAI...');
@@ -288,7 +325,7 @@ Focus on creating a compelling narrative that shows why this candidate is perfec
 
     // Transform the tailored data to match the database schema AND frontend expectations
     const tailoredContent = {
-      contact: tailoredData.contact || currentContent.contact,
+      contact: tailoredData.contact || currentContent.contactInfo,
       summary: tailoredData.summary || '',
       experience: Array.isArray(tailoredData.experience) ?
         tailoredData.experience.map((exp: any) => ({
@@ -319,7 +356,7 @@ Focus on creating a compelling narrative that shows why this candidate is perfec
 
     // Create the frontend-compatible structure
     const frontendResume = {
-      contactInfo: tailoredData.contact || currentContent.contact,
+      contactInfo: tailoredData.contact || currentContent.contactInfo,
       professionalSummary: tailoredData.summary ? {
         summary: tailoredData.summary,
         targetRole: '',
@@ -355,11 +392,15 @@ Focus on creating a compelling narrative that shows why this candidate is perfec
       } : currentContent.skills || { technical: [], frameworks: [], tools: [], cloud: [], databases: [], soft: [], certifications: [] }
     };
 
-    // Update the resume with tailored content
+    // Update the resume with tailored content - save to structured fields
     const updatedResume = await prisma.resume.update({
       where: { id: resumeId },
       data: {
-        currentContent: tailoredContent,
+        contactInfo: frontendResume.contactInfo,
+        professionalSummary: frontendResume.professionalSummary,
+        workExperience: frontendResume.workExperience,
+        education: frontendResume.education,
+        skills: frontendResume.skills,
         lastOptimized: new Date(),
       }
     });

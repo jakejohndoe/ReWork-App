@@ -370,7 +370,7 @@ export default function EducationSection({ education, onChange, className = "" }
                   value={edu.degree}
                   onValueChange={(value) => handleEducationChange(edu.id, 'degree', value)}
                 >
-                  <SelectTrigger className="bg-white/5 border-white/20 text-white focus:border-primary-400">
+                  <SelectTrigger className="bg-white/5 border-white/20 text-white focus:border-primary-400 min-w-[200px]">
                     <SelectValue placeholder="Select degree type" />
                   </SelectTrigger>
                   <SelectContent>
