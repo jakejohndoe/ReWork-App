@@ -429,11 +429,14 @@ Focus on creating a compelling narrative that shows why this candidate is perfec
       }
     });
 
+    let applicationId: string;
+
     if (existingApplication) {
       // Update existing application
-      await prisma.jobApplication.update({
+      const updatedApp = await prisma.jobApplication.update({
         where: { id: existingApplication.id },
         data: {
+          originalContent: currentContent, // Store the pre-tailoring snapshot
           optimizedContent: tailoredContent,
           optimizedStructured: frontendResume,
           jobDescription: actualJobDescription,
@@ -441,23 +444,27 @@ Focus on creating a compelling narrative that shows why this candidate is perfec
           lastAnalyzed: new Date()
         }
       });
+      applicationId = updatedApp.id;
       console.log('📝 Updated existing job application');
     } else {
       // Create new job application
-      await prisma.jobApplication.create({
+      console.log('📝 Creating JobApplication with userId:', resume.userId);
+      const newApplication = await prisma.jobApplication.create({
         data: {
           userId: resume.userId,
           resumeId: resumeId,
           jobTitle: jobTitle,
           company: actualCompanyName,
           jobDescription: actualJobDescription,
+          originalContent: currentContent, // Store the pre-tailoring snapshot
           optimizedContent: tailoredContent,
           optimizedStructured: frontendResume,
           status: 'OPTIMIZED',
           lastAnalyzed: new Date()
         }
       });
-      console.log('📝 Created new job application');
+      applicationId = newApplication.id;
+      console.log('📝 Created new job application with ID:', newApplication.id, 'for userId:', newApplication.userId);
 
       // Increment the user's monthly resume count (only for new tailoring)
       await prisma.user.update({
@@ -475,7 +482,8 @@ Focus on creating a compelling narrative that shows why this candidate is perfec
       success: true,
       message: `Resume tailored for ${jobTitle} at ${actualCompanyName}`,
       tailoredResume: frontendResume,
-      tailoredContent
+      tailoredContent,
+      applicationId // Include the JobApplication ID for redirect
     });
 
   } catch (error) {

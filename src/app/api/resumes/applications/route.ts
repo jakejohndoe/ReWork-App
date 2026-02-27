@@ -7,8 +7,11 @@ export async function GET(request: NextRequest) {
     const token = await getToken({ req: request })
 
     if (!token || !token.sub) {
+      console.error('❌ No token or token.sub in applications API')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    console.log('📍 Applications API called with userId:', token.sub)
 
     const applications = await prisma.jobApplication.findMany({
       where: {
@@ -26,6 +29,8 @@ export async function GET(request: NextRequest) {
         createdAt: 'desc'
       }
     })
+
+    console.log('📍 Found applications:', applications.length)
 
     return NextResponse.json({
       success: true,

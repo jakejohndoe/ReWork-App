@@ -564,7 +564,8 @@ export default function UnifiedEditorPage() {
           hasProfessionalSummary: !!data.tailoredResume.professionalSummary,
           workExperienceCount: data.tailoredResume.workExperience?.length || 0,
           educationCount: data.tailoredResume.education?.length || 0,
-          hasSkills: !!data.tailoredResume.skills
+          hasSkills: !!data.tailoredResume.skills,
+          applicationId: data.applicationId
         });
 
         try {
@@ -618,17 +619,13 @@ export default function UnifiedEditorPage() {
         // Save the tailored version
         await saveResume(false) // Don't show save toast to avoid double notifications
 
-        // Set tailoring results and switch to results view
-        setTailoringResults({
-          jobTitle,
-          company: companyName,
-          tailoredAt: new Date().toISOString()
-        })
-        setShowOriginalInResults(false) // Default to showing tailored version
-
-        // Show success and switch to results view
+        // Show success toast and redirect to dashboard
         toast.success('Resume tailored successfully!')
-        setRightPanelMode('results') // Show the results view with before/after toggle
+
+        // Wait a moment for the toast to show, then redirect with the application ID
+        setTimeout(() => {
+          router.push(`/dashboard?showResult=${data.applicationId}`)
+        }, 1500)
       } else {
         // Fallback error handling
         const errorMsg = data.error || data.message || 'Failed to tailor resume';

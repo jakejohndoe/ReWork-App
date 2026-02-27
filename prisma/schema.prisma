@@ -130,6 +130,7 @@ model JobApplication {
   company             String
   jobDescription      String
   jobUrl              String?
+  originalContent     Json?
   optimizedContent    Json?
   optimizedStructured Json?
   matchScore          Float?

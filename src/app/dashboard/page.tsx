@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSession } from "next-auth/react"
-import { redirect } from "next/navigation"
+import { redirect, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import ResumeUploader from "@/components/resume-uploader"
 import ResumeLoader from "@/components/resume-loader"
 import Navigation from "@/components/navigation"
+import ComparisonModal from "@/components/comparison-modal"
 import { ChatBubble } from "@/components/ui/chat-bubble"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -42,8 +43,9 @@ interface JobApplication {
   }
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { data: session, status } = useSession()
+  const searchParams = useSearchParams()
 
   // Set browser title
   useEffect(() => {
@@ -58,6 +60,10 @@ export default function DashboardPage() {
   const [resumes, setResumes] = useState<Resume[]>([])
   const [jobApplications, setJobApplications] = useState<JobApplication[]>([])
   const [deletingResumeId, setDeletingResumeId] = useState<string | null>(null)
+
+  // Comparison modal state
+  const [showComparisonModal, setShowComparisonModal] = useState(false)
+  const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null)
 
   // Only show loader if data takes more than 500ms to load
   useEffect(() => {
@@ -93,6 +99,18 @@ export default function DashboardPage() {
         // Handle if applications API doesn't exist yet
         if (appsData?.success) {
           setJobApplications(appsData.applications || [])
+
+          // Check for showResult query param after applications load
+          const showResultId = searchParams.get('showResult')
+          if (showResultId) {
+            const app = appsData.applications.find((a: JobApplication) => a.id === showResultId)
+            if (app) {
+              setSelectedApplication(app)
+              setShowComparisonModal(true)
+              // Remove query param from URL without refresh
+              window.history.replaceState({}, '', '/dashboard')
+            }
+          }
         } else {
           setJobApplications([])
         }
@@ -106,7 +124,7 @@ export default function DashboardPage() {
     }
 
     fetchData()
-  }, [status, session])
+  }, [status, session, searchParams])
 
   // Redirect if not authenticated
   if (status === "unauthenticated") {
@@ -407,7 +425,11 @@ export default function DashboardPage() {
                 {jobApplications.map((app) => (
                   <div
                     key={app.id}
-                    className="bg-slate-800/40 backdrop-blur-sm border border-white/10 hover:border-green-500/30 rounded-lg overflow-hidden transition-all duration-200 group"
+                    className="bg-slate-800/40 backdrop-blur-sm border border-white/10 hover:border-green-500/30 rounded-lg overflow-hidden transition-all duration-200 group cursor-pointer"
+                    onClick={() => {
+                      setSelectedApplication(app)
+                      setShowComparisonModal(true)
+                    }}
                   >
                     {/* Preview Area */}
                     <div className="relative bg-slate-700/30 h-32 flex items-center justify-center">
@@ -447,6 +469,7 @@ export default function DashboardPage() {
                           <Link
                             href={`/dashboard/resume/${app.resume.id}?application=${app.id}`}
                             className="flex-1"
+                            onClick={(e) => e.stopPropagation()}
                           >
                           <button className="w-full px-3 py-2 bg-slate-700 hover:bg-slate-600 border border-white/10 hover:border-white/20 rounded-md text-xs font-medium text-white transition-all flex items-center justify-center gap-1">
                             <Edit className="w-3 h-3" />
@@ -454,7 +477,12 @@ export default function DashboardPage() {
                           </button>
                         </Link>
                         )}
-                        <button className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-xs font-medium transition-colors flex items-center gap-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            // TODO: Implement download
+                          }}
+                          className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-xs font-medium transition-colors flex items-center gap-1">
                           <Download className="w-3 h-3" />
                           Download
                         </button>
@@ -515,6 +543,28 @@ export default function DashboardPage() {
 
       {/* Support Chat Bubble */}
       <ChatBubble />
+
+      {/* Comparison Modal */}
+      {selectedApplication && (
+        <ComparisonModal
+          isOpen={showComparisonModal}
+          onClose={() => {
+            setShowComparisonModal(false)
+            setSelectedApplication(null)
+          }}
+          applicationId={selectedApplication.id}
+          jobTitle={selectedApplication.jobTitle}
+          company={selectedApplication.company}
+        />
+      )}
     </div>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<ResumeLoader />}>
+      <DashboardContent />
+    </Suspense>
   )
 }
