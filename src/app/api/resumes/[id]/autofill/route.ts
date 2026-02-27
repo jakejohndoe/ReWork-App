@@ -140,11 +140,10 @@ export async function POST(
       console.log('⚠️ No fullName extracted, leaving firstName/lastName empty');
     }
 
-    // 🔧 FIXED: Transform extracted data to match database schema with proper firstName/lastName
+    // 🔧 FIXED: Transform extracted data to match FRONTEND schema expectations
     const structuredContent = {
       contact: {
-        // Store both formats for compatibility
-        fullName: extractedData.contact.fullName || '',
+        // Frontend ContactInfo expects these exact fields
         firstName: firstName,
         lastName: lastName,
         email: extractedData.contact.email || '',
@@ -155,20 +154,28 @@ export async function POST(
       },
       summary: extractedData.summary || '',
       experience: extractedData.experience.map(exp => ({
-        title: exp.title,
-        company: exp.company,
-        startDate: exp.startDate,
-        endDate: exp.endDate,
-        description: exp.description,
+        // Map to WorkExperience interface fields
+        id: Math.random().toString(36).substr(2, 9),
+        jobTitle: exp.title || 'Position',  // Frontend expects 'jobTitle', not 'title'
+        company: exp.company || 'Company',
+        startDate: exp.startDate || '',
+        endDate: exp.endDate || 'Present',
         location: '',
-        current: exp.endDate.toLowerCase().includes('present')
+        description: exp.description || '',
+        achievements: exp.description ? [exp.description] : [], // Convert string to array
+        technologies: [],
+        isCurrentRole: exp.endDate?.toLowerCase().includes('present') || false
       })),
       education: extractedData.education.map(edu => ({
-        degree: edu.degree,
-        school: edu.school,
-        year: edu.year,
+        // Map to Education interface fields
+        id: Math.random().toString(36).substr(2, 9),
+        degree: edu.degree || '',
+        field: '', // Extract from degree if possible
+        institution: edu.school || '', // Frontend expects 'institution', not 'school'
+        graduationYear: edu.year || '', // Frontend expects 'graduationYear', not 'year'
         gpa: edu.gpa || '',
-        location: '',
+        honors: [],
+        relevantCoursework: []
       })),
       skills: extractedData.skills,
       lastModified: new Date().toISOString(),

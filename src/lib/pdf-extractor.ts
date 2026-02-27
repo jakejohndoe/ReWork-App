@@ -44,6 +44,17 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
     console.log('📄 Starting PDF text extraction with pdf-parse...');
     console.log('📄 Buffer size:', pdfBuffer.length, 'bytes');
 
+    // Validate buffer
+    if (!pdfBuffer || pdfBuffer.length === 0) {
+      throw new Error('Invalid PDF buffer: empty or null');
+    }
+
+    // Check for PDF header
+    const pdfHeader = pdfBuffer.slice(0, 5).toString();
+    if (!pdfHeader.includes('%PDF')) {
+      throw new Error('Invalid PDF file: missing PDF header');
+    }
+
     const data = await pdf(pdfBuffer, {
       max: 0,
       version: 'v1.10.100',
@@ -55,7 +66,7 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
     console.log('ℹ️ PDF info:', data.info?.Title || 'No title');
 
     if (!data.text || data.text.length === 0) {
-      throw new Error('No text content extracted from PDF - file may be image-based or corrupted');
+      throw new Error('No text content extracted from PDF - file may be image-based or corrupted. Try uploading a text-based PDF.');
     }
 
     // CRITICAL FIX: Sanitize text by removing null bytes and non-printable characters

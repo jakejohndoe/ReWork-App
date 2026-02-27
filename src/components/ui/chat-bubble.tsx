@@ -18,6 +18,11 @@ export function ChatBubble({ className }: ChatBubbleProps) {
   const [isFirstOpen, setIsFirstOpen] = useState(true)
 
   useEffect(() => {
+    // Show notification dot on first visit after login
+    if (session?.user && !localStorage.getItem('chat-seen')) {
+      setHasNotification(true)
+    }
+
     const handleChatNotification = () => {
       setHasNotification(true)
     }
@@ -26,7 +31,7 @@ export function ChatBubble({ className }: ChatBubbleProps) {
     return () => {
       window.removeEventListener('show-chat-notification', handleChatNotification)
     }
-  }, [])
+  }, [session])
 
   const handleSendMessage = () => {
     if (message.trim()) {
@@ -48,6 +53,7 @@ export function ChatBubble({ className }: ChatBubbleProps) {
     setIsOpen(true)
     setHasNotification(false)
     setIsFirstOpen(false)
+    localStorage.setItem('chat-seen', 'true')
   }
 
   return (
@@ -129,24 +135,22 @@ export function ChatBubble({ className }: ChatBubbleProps) {
       )}
 
       {/* Chat Button */}
-      <div className="relative">
-        <Button
-          onClick={() => isOpen ? setIsOpen(false) : handleOpen()}
-          size="lg"
-          className="h-14 w-14 rounded-full shadow-2xl bg-primary hover:bg-primary/90 text-primary-foreground"
-        >
-          {isOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
+      {!isOpen && (
+        <div className="relative">
+          <Button
+            onClick={handleOpen}
+            size="lg"
+            className="h-14 w-14 rounded-full shadow-2xl bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
             <MessageCircle className="h-6 w-6" />
-          )}
-        </Button>
+          </Button>
 
-        {/* Notification Dot */}
-        {hasNotification && !isOpen && (
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-background animate-pulse" />
-        )}
-      </div>
+          {/* Notification Dot */}
+          {hasNotification && (
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-background animate-pulse" />
+          )}
+        </div>
+      )}
     </div>
   )
 }

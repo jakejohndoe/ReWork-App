@@ -490,22 +490,29 @@ export default function UnifiedEditorPage() {
                   resumeId={resumeId}
                   onAutoFillComplete={(data) => {
                     if (data) {
-                      // Map API response structure to frontend structure
-                      const mappedData: StructuredResumeData = {
-                        contactInfo: data.contact || { firstName: '', lastName: '', email: '', phone: '', location: '' },
-                        professionalSummary: typeof data.summary === 'string'
-                          ? { summary: data.summary, targetRole: '', keyStrengths: [], careerLevel: 'mid' }
-                          : data.summary || undefined,
-                        workExperience: data.experience || [],
-                        education: data.education || [],
-                        skills: Array.isArray(data.skills)
-                          ? { technical: data.skills, frameworks: [], tools: [], cloud: [], databases: [], soft: [], certifications: [] }
-                          : data.skills || { technical: [], frameworks: [], tools: [], cloud: [], databases: [], soft: [], certifications: [] },
-                        projects: data.projects || [],
-                        additionalSections: data.additionalSections || undefined
-                      };
+                      try {
+                        // Map API response structure to frontend structure with error handling
+                        const mappedData: StructuredResumeData = {
+                          contactInfo: data.contact || { firstName: '', lastName: '', email: '', phone: '', location: '' },
+                          professionalSummary: typeof data.summary === 'string'
+                            ? { summary: data.summary, targetRole: '', keyStrengths: [], careerLevel: 'mid' }
+                            : data.summary || undefined,
+                          workExperience: Array.isArray(data.experience) ? data.experience : [],
+                          education: Array.isArray(data.education) ? data.education : [],
+                          skills: Array.isArray(data.skills)
+                            ? { technical: data.skills, frameworks: [], tools: [], cloud: [], databases: [], soft: [], certifications: [] }
+                            : data.skills || { technical: [], frameworks: [], tools: [], cloud: [], databases: [], soft: [], certifications: [] },
+                          projects: data.projects || [],
+                          additionalSections: data.additionalSections || undefined
+                        };
 
-                      setResumeData(mappedData);
+                        console.log('📝 Mapped data for frontend:', mappedData);
+                        setResumeData(mappedData);
+                      } catch (error) {
+                        console.error('❌ Error mapping auto-fill data:', error);
+                        toast.error('Auto-fill completed but failed to update some fields. Please check the console.');
+                        return;
+                      }
 
                       // Auto-expand sections that got populated
                       setTimeout(() => {

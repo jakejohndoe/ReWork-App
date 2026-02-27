@@ -234,7 +234,7 @@ export default function HomePage() {
             {/* Badge under CTA */}
             <div className={`transition-all duration-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '1000ms' }}>
               <Badge className="bg-gradient-to-r from-emerald-900/30 to-blue-900/30 text-emerald-300 border border-emerald-500/30 px-4 py-2 text-sm">
-                3 Free Resumes / Month • No Credit Card Required
+                3 Free Resumes per Month • No Credit Card Required
               </Badge>
             </div>
 
