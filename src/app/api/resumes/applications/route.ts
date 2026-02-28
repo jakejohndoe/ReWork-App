@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
-    const token = await getToken({ req: request })
+    const session = await getServerSession(authOptions)
 
-    if (!token || !token.sub) {
-      console.error('❌ No token or token.sub in applications API')
+    if (!session?.user?.id) {
+      console.error('❌ No session or user.id in applications API')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    console.log('📍 Applications API called with userId:', token.sub)
+    console.log('📍 Applications API called with userId:', session.user.id)
 
     const applications = await prisma.jobApplication.findMany({
       where: {
-        userId: token.sub
+        userId: session.user.id
       },
       include: {
         resume: {

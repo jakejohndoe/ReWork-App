@@ -84,26 +84,21 @@ function DashboardContent() {
     // Start data fetching immediately
     const fetchData = async () => {
       try {
-        // Fetch resumes (source files)
+        // Fetch resumes (source files) - includes job applications data
         const resumesResponse = await fetch('/api/resumes')
         const resumesData = await resumesResponse.json()
 
-        // Fetch job applications (tailored resumes)
-        const appsResponse = await fetch('/api/resumes/applications')
-        const appsData = await appsResponse.json()
-
         if (resumesData.success) {
           setResumes(resumesData.resumes || [])
-        }
 
-        // Handle if applications API doesn't exist yet
-        if (appsData?.success) {
-          setJobApplications(appsData.applications || [])
+          // Use job applications from resumes endpoint (faster and more reliable)
+          const applications = resumesData.jobApplications || []
+          setJobApplications(applications)
 
           // Check for showResult query param after applications load
           const showResultId = searchParams.get('showResult')
-          if (showResultId) {
-            const app = appsData.applications.find((a: JobApplication) => a.id === showResultId)
+          if (showResultId && applications.length > 0) {
+            const app = applications.find((a: JobApplication) => a.id === showResultId)
             if (app) {
               setSelectedApplication(app)
               setShowComparisonModal(true)
@@ -112,6 +107,7 @@ function DashboardContent() {
             }
           }
         } else {
+          setResumes([])
           setJobApplications([])
         }
       } catch (error) {
