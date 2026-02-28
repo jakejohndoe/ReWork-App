@@ -37,9 +37,11 @@ interface JobApplication {
   company: string
   matchScore?: number
   createdAt: string
+  resumeId: string
   resume?: {
     id: string
     title: string
+    originalFileName?: string
   }
 }
 
@@ -237,16 +239,16 @@ function DashboardContent() {
 
       {/* Main Split Layout */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
-        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[45%_55%] gap-6 lg:gap-8">
 
           {/* LEFT COLUMN - Source Resumes */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-semibold text-slate-200">
                   Uploaded Resumes
                 </h2>
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs bg-slate-500/20 text-slate-400 border-slate-500/30">
                   {resumes.length}
                 </Badge>
               </div>
@@ -281,28 +283,18 @@ function DashboardContent() {
                   href={`/dashboard/resume/${resume.id}`}
                   className="block"
                 >
-                  <div className="bg-slate-800/40 backdrop-blur-sm border border-white/10 hover:border-white/20 rounded-lg p-4 transition-all duration-200 group cursor-pointer hover:bg-slate-800/50">
+                  <div className="bg-slate-800/40 backdrop-blur-sm border border-white/10 hover:border-white/20 hover:border-l-4 hover:border-l-purple-500/50 rounded-lg p-4 transition-all duration-200 group cursor-pointer hover:bg-slate-800/60 relative">
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-md bg-slate-700/50 border border-white/10 flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-4 h-4 text-slate-400" />
+                      <div className="w-8 h-8 rounded-md bg-slate-700/50 border border-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-slate-600/50 transition-colors">
+                        <FileText className="w-4 h-4 text-slate-400 group-hover:text-slate-300" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 mb-1">
                           <h3 className="text-sm font-medium text-slate-200 truncate group-hover:text-white transition-colors">
                             {resume.originalFileName || resume.title}
                           </h3>
-                          {/* Tailored Badge */}
-                          {jobApplications.filter(app => app.resume?.id === resume.id).length > 0 && (
-                            <Badge
-                              variant="secondary"
-                              className="text-[10px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
-                            >
-                              <Sparkles className="w-2.5 h-2.5 mr-1" />
-                              Tailored
-                            </Badge>
-                          )}
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
+                        <div className="flex items-center gap-2 text-xs text-slate-400">
                           <span>{formatTimeAgo(resume.updatedAt)}</span>
                           {resume.fileSize && (
                             <>
@@ -310,19 +302,17 @@ function DashboardContent() {
                               <span>{formatFileSize(resume.fileSize)}</span>
                             </>
                           )}
-                          {/* Show tailoring count if tailored */}
-                          {(() => {
-                            const tailoringCount = jobApplications.filter(app => app.resume?.id === resume.id).length;
-                            return tailoringCount > 0 && (
-                              <>
-                                <span>•</span>
-                                <span className="text-emerald-400">
-                                  {tailoringCount} tailoring{tailoringCount > 1 ? 's' : ''}
-                                </span>
-                              </>
-                            );
-                          })()}
                         </div>
+                        {/* Show tailoring count if tailored */}
+                        {(() => {
+                          const tailoringCount = jobApplications.filter(app => app.resume?.id === resume.id).length;
+                          return tailoringCount > 0 && (
+                            <div className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1">
+                              <Sparkles className="w-3 h-3" />
+                              {tailoringCount} tailored version{tailoringCount > 1 ? 's' : ''}
+                            </div>
+                          );
+                        })()}
                       </div>
                       <button
                         onClick={(e) => {
@@ -363,8 +353,8 @@ function DashboardContent() {
           </div>
 
           {/* RIGHT COLUMN - Tailored Resumes */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-semibold text-slate-200">
                   Tailored Resumes
@@ -416,77 +406,94 @@ function DashboardContent() {
                 )}
               </div>
             ) : (
-              /* Tailored Resume Cards */
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {jobApplications.map((app) => (
-                  <div
-                    key={app.id}
-                    className="bg-slate-800/40 backdrop-blur-sm border border-white/10 hover:border-green-500/30 rounded-lg overflow-hidden transition-all duration-200 group cursor-pointer"
-                    onClick={() => {
-                      setSelectedApplication(app)
-                      setShowComparisonModal(true)
-                    }}
-                  >
-                    {/* Preview Area */}
-                    <div className="relative bg-slate-700/30 h-32 flex items-center justify-center">
-                      {/* PDF Preview Placeholder */}
-                      <div className="w-16 h-20 bg-white/10 rounded border border-white/20 flex items-center justify-center">
-                        <FileText className="w-6 h-6 text-slate-400" />
-                      </div>
+              <>
+                {/* Tailored Resume Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+                  {jobApplications.map((app) => (
+                    <div
+                      key={app.id}
+                      className="bg-white/[0.04] backdrop-blur-sm border border-white/[0.08] hover:border-emerald-500/25 rounded-lg overflow-hidden transition-all duration-200 group cursor-pointer"
+                      onClick={() => {
+                        setSelectedApplication(app)
+                        setShowComparisonModal(true)
+                      }}
+                    >
+                      {/* Preview Area */}
+                      <div className="relative bg-gradient-to-br from-slate-700/40 to-slate-800/40 h-32 flex items-center justify-center border-b border-white/[0.05]">
+                        {/* PDF Preview Placeholder */}
+                        <div className="w-16 h-20 bg-white/10 rounded border border-white/20 flex items-center justify-center group-hover:bg-white/15 transition-colors">
+                          <FileText className="w-6 h-6 text-slate-400 group-hover:text-slate-300" />
+                        </div>
 
-                      {/* Match Score Badge */}
-                      {app.matchScore && (
+                        {/* Match Score Badge - always show */}
                         <div className="absolute top-3 right-3">
                           <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
-                            {Math.round(app.matchScore)}% match
+                            {app.matchScore ? `${Math.round(app.matchScore)}% match` : '✓ Optimized'}
                           </Badge>
                         </div>
-                      )}
-                    </div>
+                      </div>
 
-                    {/* Content */}
-                    <div className="p-4">
-                      <h3 className="text-sm font-semibold text-white mb-1">
-                        {app.jobTitle}
-                      </h3>
-                      <p className="text-xs text-slate-400 mb-2">
-                        {app.company}
-                      </p>
-                      <p className="text-xs text-slate-500 mb-3">
-                        From: {app.resume?.title || 'Unknown Resume'}
-                      </p>
-                      <p className="text-xs text-slate-500 mb-4">
-                        {formatTimeAgo(app.createdAt)}
-                      </p>
+                      {/* Content */}
+                      <div className="p-4">
+                        <h3 className="text-[15px] font-semibold text-white mb-1 leading-tight">
+                          {app.jobTitle}
+                        </h3>
+                        <p className="text-[13px] text-slate-400 mb-2">
+                          {app.company}
+                        </p>
+                        <p className="text-[11px] text-slate-500 mb-1">
+                          From: {app.resume?.originalFileName || app.resume?.title || 'Unknown Resume'}
+                        </p>
+                        <p className="text-[11px] text-slate-500 mb-4">
+                          {formatTimeAgo(app.createdAt)}
+                        </p>
 
-                      {/* Actions */}
-                      <div className="flex gap-2">
-                        {app.resume?.id && (
-                          <Link
-                            href={`/dashboard/resume/${app.resume.id}?application=${app.id}`}
-                            className="flex-1"
-                            onClick={(e) => e.stopPropagation()}
+                        {/* Actions */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedApplication(app)
+                              setShowComparisonModal(true)
+                            }}
+                            className="flex-1 px-3 py-2 bg-slate-700 hover:bg-slate-600 border border-white/10 hover:border-white/20 rounded-md text-xs font-medium text-white transition-all flex items-center justify-center gap-1"
                           >
-                          <button className="w-full px-3 py-2 bg-slate-700 hover:bg-slate-600 border border-white/10 hover:border-white/20 rounded-md text-xs font-medium text-white transition-all flex items-center justify-center gap-1">
                             <Edit className="w-3 h-3" />
-                            Edit
+                            Compare
                           </button>
-                        </Link>
-                        )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            // TODO: Implement download
-                          }}
-                          className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-xs font-medium transition-colors flex items-center gap-1">
-                          <Download className="w-3 h-3" />
-                          Download
-                        </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              // TODO: Implement download
+                            }}
+                            className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-xs font-medium transition-colors flex items-center gap-1">
+                            <Download className="w-3 h-3" />
+                            Download
+                          </button>
+                        </div>
                       </div>
                     </div>
+                  ))}
+                </div>
+
+                {/* Tailor Another Job Prompt */}
+                {resumes.length > 0 && (
+                  <div className="border-2 border-dashed border-slate-600/50 hover:border-slate-500/70 rounded-lg p-6 text-center transition-colors group cursor-pointer"
+                    onClick={() => {
+                      const mostRecentResume = resumes[resumes.length - 1]
+                      window.location.href = `/dashboard/resume/${mostRecentResume.id}?tab=job`
+                    }}
+                  >
+                    <Zap className="w-6 h-6 text-slate-500 group-hover:text-slate-400 mx-auto mb-2 transition-colors" />
+                    <div className="text-sm font-medium text-slate-400 group-hover:text-slate-300 transition-colors">
+                      ⚡ Tailor for another job
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      Click to optimize your resume for a new position
+                    </div>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         </div>

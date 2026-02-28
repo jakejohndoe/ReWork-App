@@ -56,7 +56,15 @@ export async function GET() {
         company: true,
         status: true,
         createdAt: true,
-        matchScore: true
+        matchScore: true,
+        resumeId: true,
+        resume: {
+          select: {
+            id: true,
+            title: true,
+            originalFileName: true
+          }
+        }
       },
       orderBy: { createdAt: 'desc' }
     })
