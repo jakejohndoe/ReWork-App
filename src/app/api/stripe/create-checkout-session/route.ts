@@ -9,7 +9,7 @@ import { prisma } from '@/lib/prisma'
 // 2. Create a new product called "ReWork Pro"
 // 3. Add a recurring price of $3.00/month
 // 4. Copy the price ID (starts with price_) to STRIPE_PRICE_ID in .env
-// 5. Go to Developers > Webhooks, add endpoint: https://app.rework.solutions/api/stripe/webhook
+// 5. Go to Developers > Webhooks, add endpoint: https://rework.hellojakejohn.com/api/stripe/webhook
 // 6. Select events: checkout.session.completed, customer.subscription.deleted, customer.subscription.updated
 // 7. Copy the webhook signing secret to STRIPE_WEBHOOK_SECRET in .env
 

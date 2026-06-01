@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 
 // STRIPE WEBHOOK SETUP:
 // 1. Go to https://dashboard.stripe.com/webhooks
-// 2. Add endpoint: https://app.rework.solutions/api/stripe/webhook
+// 2. Add endpoint: https://rework.hellojakejohn.com/api/stripe/webhook
 // 3. Select events:
 //    - checkout.session.completed
 //    - customer.subscription.deleted

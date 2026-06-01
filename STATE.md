@@ -1,7 +1,7 @@
 # ReWork Project State
 
 ## Project Overview
-**Project:** ReWork (rework.solutions) - AI-powered resume optimization platform
+**Project:** ReWork (rework.hellojakejohn.com) - AI-powered resume optimization platform
 
 ## Tech Stack
 - Next.js 15.3.2 (Turbopack)

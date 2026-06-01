@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://app.rework.solutions'),
+  metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://rework.hellojakejohn.com'),
   alternates: {
     canonical: '/',
   },
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     siteName: 'ReWork',
     images: [
       {
-        url: 'https://app.rework.solutions/og-image.png',
+        url: 'https://rework.hellojakejohn.com/og-image.png',
         width: 1200,
         height: 630,
         alt: 'ReWork — smart tech, for smarter jobs',
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'ReWork — smart tech, for smarter jobs',
     description: 'Transform your resume in seconds with AI-powered optimization. 3 free resumes per month.',
-    images: ['https://app.rework.solutions/og-image.png'],
+    images: ['https://rework.hellojakejohn.com/og-image.png'],
     creator: '@rework_app',
   },
   robots: {

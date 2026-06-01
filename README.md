@@ -146,7 +146,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 **Support**
 
-- **Documentation**: [docs.rework.solutions](https://docs.rework.solutions)
 - **Email**: support@rework.solutions
 - **GitHub Issues**: [Report a bug](https://github.com/jakejohndoe/rework-app/issues)
 
@@ -158,6 +157,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Ready to transform your career?** [Try Rework today](https://rework.solutions) and unlock your professional potential with AI-powered resume optimization.
+**Ready to transform your career?** [Try Rework today](https://rework.hellojakejohn.com) and unlock your professional potential with AI-powered resume optimization.
 
 Made with ❤️ by the Rework team
